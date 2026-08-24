@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — Crisálidas y Mariposas.
+ *
+ * ⚠️ PALETA PROVISIONAL. La identidad visual de marca (paletas, tipografías,
+ * logos) está pendiente del cliente (ver CLAUDE.md del agente storefront).
+ * Estos valores se muestrearon del video fuente del hero
+ * (`assets/source/hero-butterfly.mp4`, esquina superior-izquierda de varios
+ * frames) y de una paleta natural razonable, NO de una guía de marca real.
+ * Cuando el cliente confirme la identidad, este es el único archivo que hay
+ * que tocar — ningún componente debe tener un color incrustado.
+ */
+
+:root {
+  /* Base */
+  --color-cream: #f6f1e7;
+  --color-cream-soft: #efe8d8;
+  --color-ink: #161810;
+  --color-ink-soft: #22261a;
+
+  /* Acentos */
+  --color-moss: #4b6b4e;
+  --color-moss-soft: #7c9a7e;
+  --color-violet: #8a5fa0;
+  --color-violet-soft: #b096c0;
+  --color-amber: #c9a24b;
+  --color-amber-soft: #ddc088;
+
+  /* Estado / feedback (derivados, no de marca) */
+  --color-success: #4b6b4e;
+  --color-warning: #c9a24b;
+  --color-danger: #a2483f;
+
+  /*
+   * Color ambiente de la banda del hero. ⚠️ PROVISIONAL y DERIVADO DEL VIDEO,
+   * no de la marca: es el promedio real de los bordes izquierdo y derecho a
+   * media altura de los frames de `ACTIVE_HERO` (`emergencia`), medido con
+   * ffmpeg sobre los frames 1 / 60 / 110 / 160 / 192 — todos entre #0f0801 y
+   * #130b05. Un negro cálido, no un negro puro.
+   *
+   * Sirve como valor de servidor (evita el flash antes de que el canvas
+   * pinte); en cliente `useCanvasScrub` vuelve a muestrear el frame real y
+   * sobreescribe este valor en línea. Si se cambia `ACTIVE_HERO` por un video
+   * de otro tono, hay que volver a medir este token.
+   */
+  --color-hero-ambient: #110a03;
+
+  /* Tipografía */
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-manrope);
+}
+
+@theme inline {
+  --color-cream: var(--color-cream);
+  --color-cream-soft: var(--color-cream-soft);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-moss: var(--color-moss);
+  --color-moss-soft: var(--color-moss-soft);
+  --color-violet: var(--color-violet);
+  --color-violet-soft: var(--color-violet-soft);
+  --color-amber: var(--color-amber);
+  --color-amber-soft: var(--color-amber-soft);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-hero-ambient: var(--color-hero-ambient);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  /* Red de seguridad: algunas curvas de easing de entrada (whileInView con
+     ligero overshoot) pintan un `scale`/`translate` momentáneo mayor al
+     layout, lo que puede abrir un scrollbar horizontal fantasma en móvil
+     por una fracción de segundo. No afecta al carrusel, que scrollea en su
+     propio contenedor con overflow-x independiente. */
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-amber-soft);
+  color: var(--color-ink);
+}

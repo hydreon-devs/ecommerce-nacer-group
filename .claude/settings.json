@@ -1,4 +1,18 @@
 {
+  "permissions": {
+    "allow": [
+      "Read(//private/tmp/claude-501/bundled-skills/**)",
+      "Bash(npx --yes chromium-cli --help)",
+      "Bash(npm ls *)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(npx --yes playwright install chromium --with-deps)",
+      "Bash(npx --yes playwright@1.62.1 node \"/private/tmp/claude-501/-Users-jimmyandresbustamantegomez-Documents-Proyectos-Hydreon-ecommerce-nacer-group/ad432f46-cfaa-41ae-bcb1-3dcbc2b355d2/scratchpad/verify.mjs\")",
+      "Bash(node \"/private/tmp/claude-501/-Users-jimmyandresbustamantegomez-Documents-Proyectos-Hydreon-ecommerce-nacer-group/ad432f46-cfaa-41ae-bcb1-3dcbc2b355d2/scratchpad/verify.mjs\")",
+      "Bash(npm init *)",
+      "Bash(node verify.mjs)",
+      "Bash(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate,nb_frames,duration,width,height -of default=nk=1 \"assets/source/Butterfly_emerging_from_chrysalis_202608241003.mp4\")"
+    ]
+  },
   "enabledPlugins": {
     "ui-ux-pro-max@ui-ux-pro-max-skill": true
   }
