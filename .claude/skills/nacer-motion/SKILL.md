@@ -14,6 +14,7 @@ ficha equivocada es un error de producto, no de estilo.
 | Zona | Animación | Prioridad |
 |---|---|---|
 | Hero de portada | Entrada escalonada de texto e imagen | Alta |
+| Decoración ambiental (hero) | Criaturas volando en CSS puro (`@keyframes`, no Framer Motion) flanqueando el texto — nunca sobre él | Baja |
 | Tarjetas de producto | Elevación y escala sutil en hover | Alta |
 | Carrito | Panel lateral con deslizamiento + confirmación al agregar | Alta |
 | Estados de carga | Skeletons con pulso | Alta |

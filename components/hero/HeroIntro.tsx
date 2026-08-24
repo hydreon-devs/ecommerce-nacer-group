@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FlyingCreatures } from "@/components/decor/FlyingCreatures";
 import { HERO_INTRO } from "@/lib/content/home";
 import { ScrollIndicator } from "./ScrollIndicator";
 
@@ -18,8 +19,10 @@ import { ScrollIndicator } from "./ScrollIndicator";
  */
 export function HeroIntro() {
   return (
-    <div className="px-6 pt-24 pb-9 text-center md:px-16 md:pt-36 md:pb-14">
-      <div className="mx-auto flex max-w-5xl flex-col items-center">
+    <div className="relative px-6 pt-24 pb-9 text-center md:px-16 md:pt-36 md:pb-14">
+      <FlyingCreatures />
+
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center">
         <p className="font-body text-xs uppercase tracking-[0.22em] text-amber md:text-sm">
           {HERO_INTRO.eyebrow}
         </p>
