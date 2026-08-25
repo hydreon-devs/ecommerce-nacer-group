@@ -15,6 +15,7 @@ ficha equivocada es un error de producto, no de estilo.
 |---|---|---|
 | Hero de portada | Entrada escalonada de texto e imagen | Alta |
 | Decoración ambiental (hero) | Criaturas volando en CSS puro (`@keyframes`, no Framer Motion) flanqueando el texto — nunca sobre él | Baja |
+| Hilo del recorrido (Home) | Trazo continuo que se rellena con el scroll y una mariposa que lo recorre. El relleno anima `stroke-dashoffset` (excepción a §2.5, ver abajo); la mariposa se mueve solo con `transform`. Se atenúa sobre las secciones sobrias y desaparece al terminarlas | Media |
 | Tarjetas de producto | Elevación y escala sutil en hover | Alta |
 | Carrito | Panel lateral con deslizamiento + confirmación al agregar | Alta |
 | Estados de carga | Skeletons con pulso | Alta |
@@ -36,6 +37,14 @@ Fuera de esta lista, no animar. Si aparece una zona nueva, se agrega aquí prime
    transición. Nada de `pointer-events: none` mientras algo entra.
 5. **Animar solo `transform` y `opacity`.** Animar `width`, `height`, `top` o `left` fuerza
    layout en cada frame.
+
+   Hay exactamente **dos excepciones**, ambas deliberadas y ambas de pintado, no de layout:
+   `clip-path` en la variante `clip-reveal`, y `stroke-dashoffset` en el hilo del recorrido.
+   Cualquier tercera excepción se discute antes de escribirla.
+
+   No usar `pathLength` de Framer Motion junto con `vector-effect: non-scaling-stroke`:
+   el patrón de guiones se resuelve en espacio de pantalla y `pathLength` normaliza en
+   espacio de usuario, así que sobre un SVG estirado el relleno sale a parches.
 6. **El tono se ajusta a la ocasión.** Las fichas etiquetadas `condolencias`, `acompañar` o
    `recordar` usan el registro más sobrio del sistema: fundido simple, sin rebote, sin
    escala. Ningún `type: "spring"` con `bounce` en esas vistas.

@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel";
+import { NarrativeSection } from "@/components/home/NarrativeSection";
+import { Recorrido } from "@/components/home/Recorrido";
+import { TrustPrinciples } from "@/components/home/TrustPrinciples";
 import { ValueProps } from "@/components/home/ValueProps";
 import { HeroIntro } from "@/components/hero/HeroIntro";
 import { HeroSection } from "@/components/hero/HeroSection";
-import { RevealSection } from "@/components/motion/RevealSection";
-import { StaggerChild } from "@/components/motion/StaggerChild";
-import { StatsOverlay } from "@/components/motion/StatsOverlay";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { HOME_SECTIONS, HOME_STATS } from "@/lib/content/home";
+import { HOME_PRINCIPLES, HOME_SECTIONS } from "@/lib/content/home";
 import { getFeaturedProducts } from "@/lib/data/products";
 
 /**
@@ -21,12 +19,23 @@ import { getFeaturedProducts } from "@/lib/data/products";
  * anidamiento es también lo que permite que el intro y la banda de video
  * compartan exactamente el mismo color de fondo, sin costura entre los dos.
  *
- * Orden: intro + banda de video (zona oscura) → propuesta de valor →
- * destacados → secciones narrativas → cifras → cierre. Todo lo que sigue al
- * hero va sobre fondo claro.
+ * Orden: intro + banda de video (zona oscura) → destacados → propuesta de
+ * valor → recorrido con el hilo → cifras → cierre. Todo lo que sigue al hero va
+ * sobre fondo claro.
+ *
+ * Los destacados van pegados al video a propósito: son el único bloque del
+ * Home que lleva a comprar, y quien llega hasta el final de la banda ya invirtió
+ * scroll suficiente como para merecer producto y no otra sección de discurso.
  */
 export default function Home() {
   const destacados = getFeaturedProducts();
+
+  // El recorrido son las secciones con imagen; el hilo pasa por ellas y termina
+  // donde termina el relato. El cierre (`cta-final`) queda fuera a propósito:
+  // es el destino, no una parada más, y dejar que el hilo lo cruzara le pondría
+  // un trazo por detrás del botón.
+  const recorrido = HOME_SECTIONS.filter((section) => section.image);
+  const cierre = HOME_SECTIONS.filter((section) => !section.image);
 
   return (
     <main className="flex flex-1 flex-col">
@@ -34,72 +43,17 @@ export default function Home() {
         <HeroIntro />
       </HeroSection>
 
-      <ValueProps />
-
       <FeaturedCarousel productos={destacados} />
 
-      <div className="flex flex-col">
-        {HOME_SECTIONS.map((section) => (
-          <div key={section.id}>
-            <RevealSection
-              type={section.type}
-              align={section.align}
-              sober={section.sober}
-              className="mx-auto max-w-xl px-6 py-24 md:px-16 md:py-32"
-            >
-              {section.type === "stagger-up" ? (
-                <>
-                  <StaggerChild>
-                    <SectionLabel>{section.eyebrow}</SectionLabel>
-                  </StaggerChild>
-                  <StaggerChild
-                    as="h2"
-                    className="font-display mt-4 text-4xl leading-tight text-ink md:text-6xl"
-                  >
-                    {section.title}
-                  </StaggerChild>
-                  <StaggerChild
-                    as="p"
-                    className="font-body mt-6 text-base text-ink/75 md:text-lg"
-                  >
-                    {section.body}
-                  </StaggerChild>
-                  {section.cta && (
-                    <StaggerChild>
-                      <Link
-                        href={section.cta.href}
-                        className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 font-body text-sm text-cream transition-colors hover:bg-ink/85"
-                      >
-                        {section.cta.label} →
-                      </Link>
-                    </StaggerChild>
-                  )}
-                </>
-              ) : (
-                <>
-                  <SectionLabel>{section.eyebrow}</SectionLabel>
-                  <h2 className="font-display mt-4 text-4xl leading-tight text-ink md:text-6xl">
-                    {section.title}
-                  </h2>
-                  <p className="font-body mt-6 text-base text-ink/75 md:text-lg">
-                    {section.body}
-                  </p>
-                  {section.cta && (
-                    <Link
-                      href={section.cta.href}
-                      className="mt-8 inline-flex items-center gap-2 font-body text-sm font-medium text-moss hover:underline"
-                    >
-                      {section.cta.label} →
-                    </Link>
-                  )}
-                </>
-              )}
-            </RevealSection>
+      <ValueProps />
 
-            {section.id === "taller" && <StatsOverlay stats={HOME_STATS} />}
-          </div>
-        ))}
-      </div>
+      <Recorrido sections={recorrido} />
+
+      <TrustPrinciples principles={HOME_PRINCIPLES} />
+
+      {cierre.map((section) => (
+        <NarrativeSection key={section.id} section={section} />
+      ))}
     </main>
   );
 }

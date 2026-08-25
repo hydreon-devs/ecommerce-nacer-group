@@ -25,8 +25,16 @@ export const DURATION_UI_SLOW = 0.4;
 export const DURATION_NARRATIVE = 0.8;
 export const DURATION_NARRATIVE_SLOW = 1.0;
 
+/**
+ * Los reveals del recorrido usan el extremo LENTO de la banda permitida (1.0s),
+ * no el medio. Con las imágenes disparando al centro del viewport hay tiempo de
+ * sobra para que la entrada se lea, y a 0.8s se sentía apurada.
+ *
+ * 1.0s es el techo documentado arriba. Si alguna vez hace falta más lento, es
+ * un cambio de la regla, no de este número: se discute antes.
+ */
 const narrativeTransition: Transition = {
-  duration: DURATION_NARRATIVE,
+  duration: DURATION_NARRATIVE_SLOW,
   ease: EASE_NARRATIVE,
 };
 
@@ -107,7 +115,7 @@ export const soberVariant: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: DURATION_NARRATIVE, ease: "linear" },
+    transition: { duration: DURATION_NARRATIVE_SLOW, ease: "linear" },
   },
 };
 
@@ -126,6 +134,46 @@ const REVEAL_VARIANTS: Record<RevealType, Variants> = {
 
 export function getRevealVariant(type: RevealType): Variants {
   return REVEAL_VARIANTS[type];
+}
+
+/**
+ * Desplazamiento horizontal del sesgo lateral, en píxeles.
+ *
+ * Corto a propósito. La regla de arriba —"todo movimiento entra desde abajo,
+ * nunca slide-left/right"— sigue en pie: 20px no se leen como un deslizamiento,
+ * se leen como que el elemento resuelve hacia el lado donde vive. Subirlo a la
+ * escala de un slide (60-80px) sí rompería la regla y habría que discutirlo
+ * antes, no cambiarlo aquí.
+ */
+const LATERAL_BIAS_PX = 20;
+
+/**
+ * Añade a una variante de reveal un sesgo horizontal según el lado que ocupa el
+ * elemento: lo de la izquierda entra desde un poco más a la izquierda, y al
+ * revés.
+ *
+ * No se aplica al registro sobrio, y no porque se olvide: `soberVariant` es un
+ * fundido puro sin desplazamiento (`nacer-motion` §2.6), así que sumarle un
+ * `x` lo convertiría en otra cosa. Quien llame debe pasar la variante base ya
+ * resuelta — ver `RevealSection`, que es el único sitio que decide entre sobrio
+ * y no sobrio.
+ */
+export function withLateralBias(
+  base: Variants,
+  side: "left" | "right",
+): Variants {
+  const hidden = base.hidden;
+  const visible = base.visible;
+  if (typeof hidden !== "object" || typeof visible !== "object") return base;
+
+  return {
+    ...base,
+    hidden: {
+      ...hidden,
+      x: side === "left" ? -LATERAL_BIAS_PX : LATERAL_BIAS_PX,
+    },
+    visible: { ...visible, x: 0 },
+  };
 }
 
 // ---- Interacciones de UI (150-400ms) -------------------------------------

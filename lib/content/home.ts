@@ -7,8 +7,8 @@ import type { RevealType } from "@/components/motion/variants";
  */
 export const HERO_INTRO = {
   eyebrow: "Crisálidas y Mariposas",
-  title: "Todo lo que se transforma empieza despacio",
-  body: "Liberaciones guiadas, cerámica torneada a mano y detalles para acompañar. Elige por el momento que estás viviendo, no por la categoría.",
+  title: "Un regalo único, innovador y sostenible. Genera experiencias inolvidables",
+  body: "Liberaciones guiadas, cerámica torneada a mano y detalles para acompañar. Elige por el momento que estás viviendo, y vive una experiencia única que siempre recordarás.",
   primaryCta: { label: "Ver catálogo", href: "/catalogo" },
   secondaryCta: { label: "Conoce el taller", href: "/nosotros" },
 } as const;
@@ -55,9 +55,24 @@ export const VALUE_PROPS: ValueProp[] = [
   },
 ];
 
+export interface HomeSectionImage {
+  src: string;
+  /**
+   * Texto alternativo en español, como el resto del copy del sitio. Describe lo
+   * que se ve, no la sección: quien navega con lector de pantalla ya recibe el
+   * titular y el cuerpo por separado, así que repetirlos aquí sería ruido.
+   */
+  alt: string;
+}
+
 export interface HomeSection {
   id: string;
   type: RevealType;
+  /**
+   * De qué lado queda el texto en escritorio. En las secciones con imagen es
+   * también lo que decide el lado contrario para la foto, así que la
+   * alternancia del recorrido se lee como una sola columna en zigzag.
+   */
   align: "left" | "right" | "center";
   /** Forzado a true en la sección que habla de acompañamiento/duelo. */
   sober?: boolean;
@@ -65,6 +80,16 @@ export interface HomeSection {
   title: string;
   body: string;
   cta?: { label: string; href: string };
+  /**
+   * Imagen de apoyo. Opcional a propósito: el cierre (`cta-final`) no lleva
+   * ninguna porque es una llamada a la acción, no un momento del relato, y
+   * meterle una foto competiría con el botón.
+   *
+   * ⚠️ Las imágenes actuales son generadas, no fotografía real de la marca.
+   * Sirven para validar la demo; hay que reemplazarlas por producción propia
+   * antes de publicar.
+   */
+  image?: HomeSectionImage;
 }
 
 /**
@@ -88,6 +113,10 @@ export const HOME_SECTIONS: HomeSection[] = [
     eyebrow: "Naturaleza y transformación",
     title: "Un ciclo completo antes de llegar a tus manos",
     body: "Lo que se ve arriba no es una metáfora: así emerge una monarca. Ese mismo ritmo — lento, exacto, imposible de apurar — es el que seguimos para preparar cada experiencia y cada pieza que sale del taller.",
+    image: {
+      src: "/images/recorrido/intro.webp",
+      alt: "Una mariposa monarca emergiendo de su crisálida translúcida, colgada de un hilo de seda sobre fondo oscuro.",
+    },
   },
   {
     id: "categorias",
@@ -97,6 +126,10 @@ export const HOME_SECTIONS: HomeSection[] = [
     title: "Experiencias, artesanía y detalles de acompañamiento",
     body: "Liberaciones guiadas para celebrar en vivo, cerámica torneada a mano para decorar y regalar, y detalles pequeños para los momentos que no necesitan grandeza — solo presencia.",
     cta: { label: "Ver el catálogo", href: "/catalogo" },
+    image: {
+      src: "/images/recorrido/categorias.webp",
+      alt: "Tres piezas de cerámica artesanal en tonos crema y verde musgo sobre madera, con una monarca posada en el borde de una de ellas.",
+    },
   },
   {
     id: "taller",
@@ -105,6 +138,10 @@ export const HOME_SECTIONS: HomeSection[] = [
     eyebrow: "El taller",
     title: "Cerámica que pasa por manos, no por una línea de producción",
     body: "Nuestros artesanos tornean, esmaltan y curan cada objeto por lotes. Algunas piezas salen únicas sin que nadie lo planee; otras se hacen solo cuando alguien las pide. En los dos casos, el tiempo es parte del producto.",
+    image: {
+      src: "/images/recorrido/taller.webp",
+      alt: "Manos cubiertas de barro dando forma a una vasija en el torno de alfarero, bajo luz cálida de taller.",
+    },
   },
   {
     id: "ocasion-experiencia",
@@ -114,6 +151,10 @@ export const HOME_SECTIONS: HomeSection[] = [
     title: "Liberaciones guiadas, en el momento exacto",
     body: "Cumpleaños, aniversarios, cierres de ciclo. Un guía especializado acompaña todo el proceso, desde la cría certificada hasta el instante en que las mariposas toman el aire.",
     cta: { label: "Ver experiencias", href: "/catalogo?ocasion=experiencia" },
+    image: {
+      src: "/images/recorrido/experiencia.webp",
+      alt: "Unas manos abiertas liberando varias mariposas monarca a contraluz en un jardín tropical.",
+    },
   },
   {
     id: "acompanar",
@@ -124,6 +165,10 @@ export const HOME_SECTIONS: HomeSection[] = [
     title: "También hay espacio para lo difícil",
     body: "No todo lo que hacemos es para celebrar. Hay detalles pensados para acompañar una pérdida, sin necesidad de encontrar las palabras correctas — a veces basta con estar presente.",
     cta: { label: "Ver detalles de acompañamiento", href: "/catalogo?ocasion=acompañar" },
+    image: {
+      src: "/images/recorrido/acompanar.webp",
+      alt: "Un cuenco pequeño de cerámica sin esmaltar junto a un ala de monarca, sobre lino claro y luz difusa.",
+    },
   },
   {
     id: "cta-final",
@@ -136,21 +181,37 @@ export const HOME_SECTIONS: HomeSection[] = [
   },
 ];
 
-export interface HomeStat {
+export interface HomePrinciple {
   id: string;
-  value: number;
-  suffix?: string;
-  label: string;
+  numeral: string;
+  title: string;
+  body: string;
 }
 
 /**
- * ⚠️ Cifras de ejemplo — no son datos reales de la marca. Fase 1 no tiene
- * backend para calcularlas; se reemplazan cuando exista una fuente real.
+ * Principios verificables que sustituyen las cifras ficticias del prototipo.
+ * El bloque explica cómo funciona la experiencia de compra sin atribuir a la
+ * marca volumen, certificaciones o resultados que todavía no estén validados.
  */
-export const HOME_STATS: HomeStat[] = [
-  { id: "mariposas", value: 4200, suffix: "+", label: "mariposas liberadas" },
-  { id: "familias", value: 860, suffix: "+", label: "familias acompañadas" },
-  { id: "piezas", value: 1500, suffix: "+", label: "piezas de cerámica entregadas" },
+export const HOME_PRINCIPLES: HomePrinciple[] = [
+  {
+    id: "momento",
+    numeral: "01",
+    title: "El momento primero",
+    body: "Explora por celebración, familia, agradecimiento o acompañamiento. Empiezas por lo que quieres expresar, no por una categoría comercial.",
+  },
+  {
+    id: "disponibilidad",
+    numeral: "02",
+    title: "Disponibilidad sin promesas falsas",
+    body: "Si una pieza está lista, lo indicamos. Si se produce bajo pedido, mostramos su tiempo de preparación y sigue siendo posible solicitarla.",
+  },
+  {
+    id: "coordinacion",
+    numeral: "03",
+    title: "Coordinación humana",
+    body: "Las experiencias, las fechas especiales y los detalles particulares se coordinan directamente por WhatsApp antes de confirmar.",
+  },
 ];
 
 function assertNoConsecutiveRepeats(sections: HomeSection[]): void {
