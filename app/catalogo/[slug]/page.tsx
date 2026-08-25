@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DisponibilidadBadge } from "@/components/catalogo/DisponibilidadBadge";
-import { GalleryPlaceholder } from "@/components/producto/GalleryPlaceholder";
 import { OcasionTags } from "@/components/producto/OcasionTags";
+import { ProductGallery } from "@/components/producto/ProductGallery";
 import { WhatsAppCTA } from "@/components/producto/WhatsAppCTA";
 import { formatCop } from "@/lib/format";
 import { getProductBySlug, PRODUCTS } from "@/lib/data/products";
@@ -37,7 +37,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   return (
     <main className="flex flex-1 flex-col px-6 pt-32 pb-16 md:px-16 md:pt-40 md:pb-24">
       <div className="mx-auto grid w-full max-w-5xl gap-12 md:grid-cols-2">
-        <GalleryPlaceholder producto={producto} />
+        <ProductGallery producto={producto} />
 
         <div className="flex flex-col gap-6">
           <Link

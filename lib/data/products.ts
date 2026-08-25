@@ -39,7 +39,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["celebración", "experiencia", "naturaleza"],
-    imagenes: ["Ceremonia al aire libre", "Detalle de mariposa monarca", "Grupo en el momento de liberación"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0001.webp",
+        alt: "Personas liberando mariposas monarca en un jardín botánico",
+      },
+    ],
   },
   {
     id: "cm-0002",
@@ -59,7 +64,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["homenaje", "experiencia", "recordar"],
-    imagenes: ["Espacio reservado", "Guía preparando la cría", "Momento íntimo de liberación"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0002.webp",
+        alt: "Ceremonia íntima de liberación de mariposas entre flores blancas",
+      },
+    ],
   },
   {
     id: "cm-0003",
@@ -78,7 +88,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: true,
     activo: true,
     ocasiones: ["decoración", "naturaleza", "regalo"],
-    imagenes: ["Cúpula de cristal soplado", "Detalle de las alas", "Sobre una mesa de madera"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0003.webp",
+        alt: "Cúpula de cristal con una mariposa monarca preservada",
+      },
+    ],
   },
   {
     id: "cm-0004",
@@ -97,7 +112,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["decoración", "regalo", "celebrar"],
-    imagenes: ["Vasija completa", "Detalle del relieve", "En contexto de mesa"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0004.webp",
+        alt: "Vasija artesanal con relieve inspirado en alas de mariposa",
+      },
+    ],
   },
   {
     id: "cm-0005",
@@ -117,7 +137,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["familia", "agradecer", "empresas"],
-    imagenes: ["Set completo sobre bandeja", "Detalle del esmaltado", "En uso durante una reunión"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0005.webp",
+        alt: "Tetera y tres tazas de cerámica ámbar sobre una bandeja",
+      },
+    ],
   },
   {
     id: "cm-0006",
@@ -136,7 +161,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["condolencias", "acompañar", "recordar"],
-    imagenes: ["Caja cerrada con listón", "Contenido de la caja", "Tarjeta escrita a mano"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0006.webp",
+        alt: "Caja de acompañamiento con mariposa, vela y tarjeta artesanal",
+      },
+    ],
   },
   {
     id: "cm-0007",
@@ -154,7 +184,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["condolencias", "acompañar"],
-    imagenes: ["Vela encendida", "Tarjeta artesanal", "Presentación conjunta"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0007.webp",
+        alt: "Vela ritual encendida junto a una tarjeta artesanal",
+      },
+    ],
   },
   {
     id: "cm-0008",
@@ -173,7 +208,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["empresas", "agradecer", "regalo"],
-    imagenes: ["Kit completo", "Empaque personalizado", "Detalle de la pieza incluida"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0008.webp",
+        alt: "Kit empresarial artesanal con empaque y pieza de mariposa",
+      },
+    ],
   },
   {
     id: "cm-0009",
@@ -192,7 +232,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: true,
     activo: true,
     ocasiones: ["decoración", "naturaleza", "celebración"],
-    imagenes: ["Terrario cerrado", "Vista superior del follaje", "En repisa junto a luz natural"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0009.webp",
+        alt: "Mariposario de mesa con follaje preservado en una urna de cristal",
+      },
+    ],
   },
   {
     id: "cm-0010",
@@ -211,7 +256,12 @@ export const PRODUCTS: Producto[] = [
     esPiezaUnica: false,
     activo: true,
     ocasiones: ["familia", "educación", "experiencia"],
-    imagenes: ["Familia observando el proceso", "Detalle de la crisálida", "Liberación conjunta"],
+    imagenes: [
+      {
+        url: "/images/products/cm-0010.webp",
+        alt: "Familia observando mariposas durante una experiencia guiada",
+      },
+    ],
   },
 ];
 

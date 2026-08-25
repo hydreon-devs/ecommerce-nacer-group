@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import type { Producto } from "@/lib/domain/types";
 import { esOcasionSobria } from "@/lib/domain/types";
@@ -11,12 +12,6 @@ import { DisponibilidadBadge } from "./DisponibilidadBadge";
 interface ProductCardProps {
   producto: Producto;
 }
-
-const CATEGORY_GRADIENT: Record<Producto["categoria"], string> = {
-  Experiencia: "from-moss/70 via-moss-soft/40 to-cream-soft",
-  Artesanía: "from-amber/70 via-amber-soft/40 to-cream-soft",
-  Detalle: "from-violet/60 via-violet-soft/35 to-cream-soft",
-};
 
 /**
  * Tarjeta de catálogo. `layout` + `key` estable (`producto.id`, provisto por
@@ -46,10 +41,15 @@ export function ProductCard({ producto }: ProductCardProps) {
         }`}
       >
         <Link href={`/catalogo/${producto.slug}`} className="block h-full">
-          <div
-            className={`aspect-[4/3] w-full bg-gradient-to-br ${CATEGORY_GRADIENT[producto.categoria]}`}
-            aria-hidden="true"
-          />
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-cream-soft">
+            <Image
+              src={producto.imagenes[0].url}
+              alt={producto.imagenes[0].alt}
+              fill
+              sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
+              className="object-cover"
+            />
+          </div>
           <div className="flex flex-col gap-2 p-5">
             <p className="font-body text-xs uppercase tracking-wide text-ink/50">
               {producto.categoria}

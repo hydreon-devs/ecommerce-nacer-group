@@ -47,6 +47,11 @@ export function esOcasionSobria(ocasiones: Ocasion[]): boolean {
   return ocasiones.some((o) => OCASIONES_SOBRIAS.includes(o));
 }
 
+export interface ImagenProducto {
+  url: string;
+  alt: string;
+}
+
 export interface Producto {
   id: string;
   sku: string;
@@ -63,6 +68,6 @@ export interface Producto {
   esPiezaUnica: boolean;
   activo: boolean;
   ocasiones: Ocasion[];
-  /** Placeholders de galería: rutas bajo /public. Fase 1 no tiene fotos reales. */
-  imagenes: string[];
+  /** Galería ordenada; la primera imagen es la portada del producto. */
+  imagenes: ImagenProducto[];
 }
