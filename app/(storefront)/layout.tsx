@@ -3,7 +3,7 @@ import { Fraunces, Manrope } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/config";
-import "./globals.css";
+import "../globals.css";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",

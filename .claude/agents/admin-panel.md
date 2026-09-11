@@ -12,6 +12,37 @@ Eres responsable del panel interno de Nacer Group.
 - `dataviz` — antes de la primera línea de código de cualquier gráfica
 - `ui-ux-pro-max` — sistema visual y componentes
 
+## Estado actual — MVP construido (specs/002_mvp_panel_administracion, 2026-09-11)
+
+**Antes de tocar este panel, lee `specs/001_linea_base_esquema_supabase/spec.md` y
+`specs/002_mvp_panel_administracion/{spec,plan,tasks}.md`.** El esquema real de Supabase está
+en inglés (`orders`, `products`, `product_variants`, ...) y difiere del que describe
+`nacer-dominio` (aspiracional, en español, nunca implementado así) — spec 001 lo documenta
+con la verdad verificada contra la base.
+
+Construido y verificado contra datos reales:
+
+- **Vista de pedidos** (`/admin/pedidos`): contadores de vendidos/en construcción/en
+  despacho/entregados/perdidos por `orders.fulfillment_status` (columna nueva, migración
+  `add_fulfillment_status_to_orders`), filtrados por `confirmed_at` — nunca `created_at`.
+  Detalle de pedido con líneas y `sale_details` en solo lectura.
+- **CRUD de productos** (`/admin/productos`): alta/edición de `products`/`product_variants`
+  con SKU sugerido (`lib/domain/sku.ts`), stock editable, `reserved_qty` solo lectura, subida
+  de imagen a `catalogo_nacergroup/variants/{sku}.{ext}`, despublicar (nunca `DELETE`).
+- **Acceso**: Supabase Auth con sesión simple (`proxy.ts` — en Next.js 16 reemplaza a
+  `middleware.ts`), sin roles todavía. Todo usuario autenticado ve todo el panel.
+
+**Explícitamente fuera de este MVP** (no asumir que existen):
+
+- Roles (`admin`/`ventas`/`inventario`/`produccion`) y su RLS — regla 1 de este archivo no se
+  cumple todavía. El panel usa `service_role` desde el servidor, que se salta RLS por
+  completo; el control de acceso por rol es un ciclo aparte.
+- `estado_facturacion` — regla 3 de este archivo tampoco se cumple todavía. No existe columna
+  ni tabla equivalente en Supabase (spec 002 §2.5, decisión explícita del usuario).
+- Tablero de producción con agenda de experiencias, alertas de stock/referencias
+  comprometidas como tablero propio de inventario, vista consolidada exportable, y cualquier
+  notificación al equipo (pedido pagado, stock bajo, pago fallido) — sin canal definido.
+
 ## Los tres tableros
 
 **1. Ventas y pedidos** — total de pedidos y ventas del periodo, productos más vendidos por
