@@ -11,16 +11,18 @@ import {
   uploadVariantImage,
 } from "../actions";
 
+const CARD_CLASS = "rounded-xl border border-admin-border bg-admin-surface-raised";
+
 export function ProductEditor({ product }: { product: ProductDetail }) {
   const [published, setPublished] = useState(product.is_published);
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4">
+    <div className="animate-view-in flex flex-col gap-6">
+      <div className={`flex items-center justify-between p-4 ${CARD_CLASS}`}>
         <div>
-          <p className="text-sm font-medium text-slate-900">{product.name}</p>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm font-medium text-admin-ink">{product.name}</p>
+          <p className="font-admin-mono text-xs text-admin-ink-muted">
             {product.sku} · {product.brand}
             {product.category ? ` · ${product.category}` : ""}
           </p>
@@ -34,8 +36,10 @@ export function ProductEditor({ product }: { product: ProductDetail }) {
               setPublished((v) => !v);
             })
           }
-          className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-            published ? "bg-slate-100 text-slate-700" : "bg-amber-100 text-amber-800"
+          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity duration-200 ${
+            published
+              ? "bg-admin-surface-sunken text-admin-ink-secondary"
+              : "bg-admin-warning-bg text-admin-warning-fg"
           }`}
         >
           {published ? "Publicado — despublicar" : "Despublicado — publicar"}
@@ -43,12 +47,12 @@ export function ProductEditor({ product }: { product: ProductDetail }) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-slate-900">Variantes</h2>
+        <h2 className="text-sm font-semibold text-admin-ink">Variantes</h2>
         {product.variants.map((variant) => (
           <VariantCard key={variant.id} variant={variant} />
         ))}
         {product.variants.length === 0 ? (
-          <p className="text-sm text-slate-400">Sin variantes todavía.</p>
+          <p className="text-sm text-admin-ink-muted">Sin variantes todavía.</p>
         ) : null}
       </div>
 
@@ -68,8 +72,8 @@ function VariantCard({ variant }: { variant: VariantRow }) {
   const available = Math.max(stockQty - variant.reserved_qty, 0);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 bg-white p-3">
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-100">
+    <div className={`flex flex-wrap items-center gap-4 p-3 ${CARD_CLASS}`}>
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-admin-surface-sunken">
         {imageUrl && !imageBroken ? (
           <Image
             src={imageUrl}
@@ -83,39 +87,39 @@ function VariantCard({ variant }: { variant: VariantRow }) {
       </div>
 
       <div className="flex min-w-[10rem] flex-1 flex-col gap-1">
-        <p className="font-mono text-xs text-slate-600">{variant.sku}</p>
-        <p className="text-xs text-slate-500">
+        <p className="font-admin-mono text-xs text-admin-ink-secondary">{variant.sku}</p>
+        <p className="text-xs text-admin-ink-muted">
           {Object.entries(variant.attributes)
             .map(([k, v]) => `${k}: ${v}`)
             .join(", ") || "sin atributos"}
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-admin-ink-muted">
           Reservado: {variant.reserved_qty} · Disponible: {available}
         </p>
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-500">Stock</label>
+        <label className="text-xs text-admin-ink-muted">Stock</label>
         <div className="flex gap-1">
           <input
             type="number"
             min={0}
             value={stockQty}
             onChange={(e) => setStockQty(Number(e.target.value))}
-            className="w-20 rounded-md border border-slate-300 px-2 py-1 text-xs"
+            className="w-20 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-xs text-admin-ink outline-none focus:border-admin-accent"
           />
           <button
             type="button"
             disabled={pending}
             onClick={() => startTransition(() => updateVariantStock(variant.id, stockQty))}
-            className="rounded-md bg-slate-900 px-2 py-1 text-xs text-white"
+            className="rounded-lg bg-admin-accent px-2 py-1 text-xs text-admin-accent-ink transition-opacity duration-200 hover:opacity-90"
           >
             Guardar
           </button>
         </div>
       </div>
 
-      <label className="flex flex-col gap-1 text-xs text-slate-500">
+      <label className="flex flex-col gap-1 text-xs text-admin-ink-muted">
         Imagen
         <input
           type="file"
@@ -136,7 +140,7 @@ function VariantCard({ variant }: { variant: VariantRow }) {
               }
             });
           }}
-          className="text-xs"
+          className="text-xs text-admin-ink-secondary"
         />
       </label>
 
@@ -149,14 +153,14 @@ function VariantCard({ variant }: { variant: VariantRow }) {
             setActive((v) => !v);
           })
         }
-        className={`rounded-md px-2 py-1 text-xs font-medium ${
-          active ? "bg-slate-100 text-slate-700" : "bg-amber-100 text-amber-800"
+        className={`rounded-lg px-2 py-1 text-xs font-medium transition-opacity duration-200 ${
+          active ? "bg-admin-surface-sunken text-admin-ink-secondary" : "bg-admin-warning-bg text-admin-warning-fg"
         }`}
       >
         {active ? "Activa" : "Despublicada"}
       </button>
 
-      {error ? <p className="w-full text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="w-full text-xs text-admin-critical-fg">{error}</p> : null}
     </div>
   );
 }
@@ -170,7 +174,7 @@ function AddVariantForm({ productId, productSku }: { productId: string; productS
 
   return (
     <form
-      className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed border-slate-300 bg-white p-4"
+      className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-admin-border-strong bg-admin-surface-raised p-4"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData();
@@ -193,41 +197,41 @@ function AddVariantForm({ productId, productSku }: { productId: string; productS
       }}
     >
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-500">Atributo</label>
+        <label className="text-xs text-admin-ink-muted">Atributo</label>
         <input
           value={attributeKey}
           onChange={(e) => setAttributeKey(e.target.value)}
-          className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+          className="rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
           placeholder="color"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-500">Valor</label>
+        <label className="text-xs text-admin-ink-muted">Valor</label>
         <input
           value={attributeValue}
           onChange={(e) => setAttributeValue(e.target.value)}
-          className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+          className="rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
           placeholder="blanco"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-slate-500">Stock</label>
+        <label className="text-xs text-admin-ink-muted">Stock</label>
         <input
           type="number"
           min={0}
           value={stockQty}
           onChange={(e) => setStockQty(Number(e.target.value))}
-          className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
+          className="w-24 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
+        className="rounded-lg bg-admin-accent px-3 py-1.5 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90 disabled:opacity-60"
       >
         Agregar variante
       </button>
-      {error ? <p className="w-full text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="w-full text-xs text-admin-critical-fg">{error}</p> : null}
     </form>
   );
 }

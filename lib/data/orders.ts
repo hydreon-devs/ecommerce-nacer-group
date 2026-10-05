@@ -5,12 +5,15 @@ export type FulfillmentStatus = "en_construccion" | "en_despacho" | "entregado" 
 
 export interface OrderListItem {
   id: string;
+  human_number: string;
   chat_id: string;
   status: string;
   payment_status: string | null;
   fulfillment_status: FulfillmentStatus | null;
   grand_total: number;
   delivery_method: string | null;
+  advisor_name: string | null;
+  supplier_name: string | null;
   created_at: string;
   confirmed_at: string | null;
 }
@@ -67,7 +70,27 @@ export interface OrderDetail extends OrderListItem {
   payment_source: string | null;
   payment_ref: string | null;
   paid_amount: number | null;
+  occasion: string | null;
+  desired_delivery_date: string | null;
   lines: OrderLineItem[];
+  saleDetails: SaleDetails | null;
+}
+
+/**
+ * Fila completa de la tabla operativa (spec 003 §5) — el equivalente al
+ * Excel del negocio. Junta `orders` con el resumen de líneas de producto y
+ * `sale_details`, todo en un solo objeto por fila para no repetir el join
+ * en cada celda de la tabla.
+ */
+export interface OrderTableRow extends OrderListItem {
+  delivery_distance_km: number | null;
+  delivery_fee: number;
+  payment_source: string | null;
+  occasion: string | null;
+  desired_delivery_date: string | null;
+  productSummary: string;
+  totalQty: number;
+  productCost: number;
   saleDetails: SaleDetails | null;
 }
 
@@ -132,13 +155,26 @@ export async function getOrderCounts(period: PeriodRange): Promise<OrderCounts> 
   };
 }
 
-export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderListItem[]> {
+interface OrderLineJoinRow {
+  order_id: string;
+  qty: number;
+  total_price: number;
+  product_variants: { products: { name: string } | null } | null;
+}
+
+/**
+ * La tabla operativa completa (spec 003 §5) — todo lo que ya existe en
+ * Supabase para igualar el Excel del negocio, en tres consultas en lote (no
+ * una por fila): pedidos del periodo, sus líneas consumidas y su
+ * `sale_details`.
+ */
+export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderTableRow[]> {
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
+  const { data: orders, error: ordersError } = await supabase
     .from("orders")
     .select(
-      "id, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, created_at, confirmed_at",
+      "id, human_number, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, delivery_distance_km, delivery_fee, payment_source, occasion, desired_delivery_date, advisor_name, supplier_name, created_at, confirmed_at",
     )
     .not("confirmed_at", "is", null)
     .gte("confirmed_at", period.desde)
@@ -146,8 +182,49 @@ export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderL
     .order("confirmed_at", { ascending: false })
     .limit(limit);
 
-  if (error) throw error;
-  return data ?? [];
+  if (ordersError) throw ordersError;
+  if (!orders || orders.length === 0) return [];
+
+  const orderIds = orders.map((o) => o.id);
+
+  const [{ data: lineRows, error: linesError }, { data: saleDetailRows, error: saleError }] =
+    await Promise.all([
+      supabase
+        .from("reservations")
+        .select("order_id, qty, total_price, product_variants(products(name))")
+        .eq("status", "consumida")
+        .in("order_id", orderIds),
+      supabase.from("sale_details").select("*").in("order_id", orderIds),
+    ]);
+
+  if (linesError) throw linesError;
+  if (saleError) throw saleError;
+
+  const linesByOrder = new Map<string, { names: string[]; qty: number; cost: number }>();
+  for (const row of (lineRows ?? []) as unknown as OrderLineJoinRow[]) {
+    const entry = linesByOrder.get(row.order_id) ?? { names: [], qty: 0, cost: 0 };
+    const name = row.product_variants?.products?.name;
+    if (name) entry.names.push(`${name} ×${row.qty}`);
+    entry.qty += row.qty;
+    entry.cost += Number(row.total_price);
+    linesByOrder.set(row.order_id, entry);
+  }
+
+  const saleDetailsByOrder = new Map<string, SaleDetails>();
+  for (const row of saleDetailRows ?? []) {
+    saleDetailsByOrder.set(row.order_id, row);
+  }
+
+  return orders.map((order) => {
+    const summary = linesByOrder.get(order.id);
+    return {
+      ...order,
+      productSummary: summary?.names.join(", ") || "—",
+      totalQty: summary?.qty ?? 0,
+      productCost: summary?.cost ?? 0,
+      saleDetails: saleDetailsByOrder.get(order.id) ?? null,
+    };
+  });
 }
 
 export async function getOrderDetail(orderId: string): Promise<OrderDetail | null> {

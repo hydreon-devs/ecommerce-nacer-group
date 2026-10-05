@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+/**
+ * Sistema de diseño del panel — aprobado como maqueta interactiva el
+ * 2026-09-11 (specs/003_rediseno_panel_kpis_tabla_operativa). Independiente
+ * de app/globals.css (la tienda): ningún color de aquí se comparte con el
+ * storefront salvo --admin-accent, que reutiliza --color-moss a propósito
+ * (pedido explícito del usuario: "puedes utilizar la misma paleta para
+ * detalles del admin").
+ *
+ * El resto de la paleta de marca (crema, violeta, ámbar) se probó como color
+ * de datos con el validador de la skill `dataviz` y falló los pisos de
+ * croma/contraste — por eso las gráficas usan una paleta técnica aparte
+ * (--series-*) y los estados usan colores semánticos reservados
+ * (--good/--warning/--critical), nunca la marca ni entre sí.
+ */
+
+:root {
+  color-scheme: light;
+  --admin-surface: #f8fafc;
+  --admin-surface-raised: #ffffff;
+  --admin-surface-sunken: #eef2f6;
+  --admin-ink: #0b1120;
+  --admin-ink-secondary: #4b5a52;
+  --admin-ink-muted: #7c8b83;
+  --admin-border: #e1e8e2;
+  --admin-border-strong: #c7d2cb;
+  --admin-accent: #4b6b4e;
+  --admin-accent-ink: #ffffff;
+  --admin-accent-wash: #e7efe8;
+  --admin-good: #0ca30c;
+  --admin-warning-bg: #fef3c7;
+  --admin-warning-fg: #92650b;
+  --admin-critical-bg: #fbe4e4;
+  --admin-critical-fg: #a2483f;
+  --admin-series-blue: #2a78d6;
+  --admin-series-orange: #eb6834;
+  --admin-series-aqua: #1baf7a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --admin-surface: #0b1120;
+    --admin-surface-raised: #131c2e;
+    --admin-surface-sunken: #0f1729;
+    --admin-ink: #f3f7f4;
+    --admin-ink-secondary: #b9c7be;
+    --admin-ink-muted: #7e8d95;
+    --admin-border: #223047;
+    --admin-border-strong: #2c3b57;
+    --admin-accent: #7c9a7e;
+    --admin-accent-ink: #0b1120;
+    --admin-accent-wash: #17251c;
+    --admin-good: #34c759;
+    --admin-warning-bg: #3a2e10;
+    --admin-warning-fg: #fab219;
+    --admin-critical-bg: #3a1414;
+    --admin-critical-fg: #f0857d;
+    --admin-series-blue: #3987e5;
+    --admin-series-orange: #d95926;
+    --admin-series-aqua: #199e70;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --admin-surface: #0b1120;
+  --admin-surface-raised: #131c2e;
+  --admin-surface-sunken: #0f1729;
+  --admin-ink: #f3f7f4;
+  --admin-ink-secondary: #b9c7be;
+  --admin-ink-muted: #7e8d95;
+  --admin-border: #223047;
+  --admin-border-strong: #2c3b57;
+  --admin-accent: #7c9a7e;
+  --admin-accent-ink: #0b1120;
+  --admin-accent-wash: #17251c;
+  --admin-good: #34c759;
+  --admin-warning-bg: #3a2e10;
+  --admin-warning-fg: #fab219;
+  --admin-critical-bg: #3a1414;
+  --admin-critical-fg: #f0857d;
+  --admin-series-blue: #3987e5;
+  --admin-series-orange: #d95926;
+  --admin-series-aqua: #199e70;
+}
+
+@theme inline {
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-surface-raised: var(--admin-surface-raised);
+  --color-admin-surface-sunken: var(--admin-surface-sunken);
+  --color-admin-ink: var(--admin-ink);
+  --color-admin-ink-secondary: var(--admin-ink-secondary);
+  --color-admin-ink-muted: var(--admin-ink-muted);
+  --color-admin-border: var(--admin-border);
+  --color-admin-border-strong: var(--admin-border-strong);
+  --color-admin-accent: var(--admin-accent);
+  --color-admin-accent-ink: var(--admin-accent-ink);
+  --color-admin-accent-wash: var(--admin-accent-wash);
+  --color-admin-good: var(--admin-good);
+  --color-admin-warning-bg: var(--admin-warning-bg);
+  --color-admin-warning-fg: var(--admin-warning-fg);
+  --color-admin-critical-bg: var(--admin-critical-bg);
+  --color-admin-critical-fg: var(--admin-critical-fg);
+  --color-admin-series-blue: var(--admin-series-blue);
+  --color-admin-series-orange: var(--admin-series-orange);
+  --color-admin-series-aqua: var(--admin-series-aqua);
+  --font-admin-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+}
+
+html.admin-shell {
+  background: var(--admin-surface);
+}
+
+body.admin-shell {
+  background: var(--admin-surface);
+  color: var(--admin-ink);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+/* Ícono del toggle de tema: ambos SVG viven siempre en el DOM (sin swap de
+   React, para no arriesgar un mismatch de hidratación — el estado real solo
+   lo sabe el atributo `data-theme`, seteado antes del primer paint por el
+   script inline de app/admin/layout.tsx) y la visibilidad la decide CSS. */
+.theme-icon-sun {
+  display: none;
+}
+.theme-icon-moon {
+  display: block;
+}
+:root[data-theme="dark"] .theme-icon-sun,
+:root:not([data-theme="light"]) .theme-icon-sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-icon-moon,
+:root:not([data-theme="light"]) .theme-icon-moon {
+  display: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .theme-icon-sun {
+    display: none;
+  }
+  :root:not([data-theme]) .theme-icon-moon {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Animaciones breves aprobadas en la maqueta (specs/003) — entrada de
+   tarjetas/vistas, nunca looping ni decorativa. */
+@keyframes admin-kpi-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-kpi-in {
+  animation: admin-kpi-in 420ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+@keyframes admin-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-view-in {
+  animation: admin-view-in 320ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}

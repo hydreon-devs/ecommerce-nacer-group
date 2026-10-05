@@ -13,6 +13,14 @@ const BRANDS = [
   { value: "florea", label: "Florea" },
 ];
 
+function chipClass(active: boolean) {
+  return `rounded-full px-3 py-1 text-sm transition-colors duration-200 ${
+    active
+      ? "bg-admin-accent text-admin-accent-ink"
+      : "bg-admin-surface-raised text-admin-ink-secondary ring-1 ring-admin-border hover:bg-admin-surface-sunken"
+  }`;
+}
+
 export default async function ProductosPage({
   searchParams,
 }: {
@@ -33,52 +41,39 @@ export default async function ProductosPage({
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="animate-view-in flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Productos</h1>
-          <p className="text-sm text-slate-500">Crisálidas, Jagua y Florea</p>
+          <h1 className="text-xl font-bold tracking-tight text-admin-ink">Productos</h1>
+          <p className="text-sm text-admin-ink-muted">Crisálidas, Jagua y Florea</p>
         </div>
         <Link
           href="/admin/productos/nuevo"
-          className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          className="rounded-lg bg-admin-accent px-3 py-2 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90"
         >
           Nuevo producto
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-2 text-sm">
-        <Link
-          href={filterLink({ brand: undefined })}
-          className={`rounded-full px-3 py-1 ${!brand ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}
-        >
+      <div className="flex flex-wrap gap-2">
+        <Link href={filterLink({ brand: undefined })} className={chipClass(!brand)}>
           Todas las marcas
         </Link>
         {BRANDS.map((b) => (
-          <Link
-            key={b.value}
-            href={filterLink({ brand: b.value })}
-            className={`rounded-full px-3 py-1 ${brand === b.value ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}
-          >
+          <Link key={b.value} href={filterLink({ brand: b.value })} className={chipClass(brand === b.value)}>
             {b.label}
           </Link>
         ))}
-        <span className="mx-1 text-slate-300">|</span>
-        <Link
-          href={filterLink({ estado: undefined })}
-          className={`rounded-full px-3 py-1 ${!estado ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}
-        >
+        <span className="mx-1 text-admin-border-strong">|</span>
+        <Link href={filterLink({ estado: undefined })} className={chipClass(!estado)}>
           Todos los estados
         </Link>
-        <Link
-          href={filterLink({ estado: "publicados" })}
-          className={`rounded-full px-3 py-1 ${estado === "publicados" ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}
-        >
+        <Link href={filterLink({ estado: "publicados" })} className={chipClass(estado === "publicados")}>
           Publicados
         </Link>
         <Link
           href={filterLink({ estado: "despublicados" })}
-          className={`rounded-full px-3 py-1 ${estado === "despublicados" ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"}`}
+          className={chipClass(estado === "despublicados")}
         >
           Despublicados
         </Link>
@@ -89,16 +84,18 @@ export default async function ProductosPage({
           <Link
             key={product.id}
             href={`/admin/productos/${product.sku}`}
-            className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:border-slate-300"
+            className="flex gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-3 shadow-[0_1px_2px_rgba(11,17,32,0.04)] transition-colors duration-200 hover:border-admin-border-strong"
           >
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-admin-surface-sunken">
               <ProductThumbnail url={product.thumbnailUrl} alt={product.name} />
             </div>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <p className="truncate text-sm font-medium text-slate-900">{product.name}</p>
-              <p className="text-xs text-slate-500">{product.sku}</p>
-              <p className="text-xs text-slate-500">{formatCop(product.base_price)}</p>
-              <p className="text-xs text-slate-500">
+              <p className="truncate text-sm font-medium text-admin-ink">{product.name}</p>
+              <p className="font-admin-mono text-xs text-admin-ink-muted">{product.sku}</p>
+              <p className="font-admin-mono text-xs text-admin-ink-secondary">
+                {formatCop(product.base_price)}
+              </p>
+              <p className="text-xs text-admin-ink-muted">
                 {product.availableUnits} disponibles
                 {!product.is_published ? " · despublicado" : ""}
               </p>
@@ -106,7 +103,7 @@ export default async function ProductosPage({
           </Link>
         ))}
         {products.length === 0 ? (
-          <p className="col-span-full py-6 text-center text-sm text-slate-400">
+          <p className="col-span-full py-6 text-center text-sm text-admin-ink-muted">
             Sin productos con este filtro.
           </p>
         ) : null}

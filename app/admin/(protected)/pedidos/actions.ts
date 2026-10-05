@@ -33,3 +33,29 @@ export async function setFulfillmentStatus(orderId: string, status: FulfillmentS
   revalidatePath("/admin/pedidos");
   return { ok: true as const };
 }
+
+/**
+ * Asesor y proveedor son texto libre por decisión explícita (spec 003 §5.1):
+ * la artesana los registra hoy a mano, sin tabla de catálogo todavía. Se
+ * guarda tal cual, vacío se normaliza a null (no cadena vacía).
+ */
+export async function setOrderStaffFields(
+  orderId: string,
+  fields: { advisorName: string; supplierName: string },
+) {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      advisor_name: fields.advisorName.trim() || null,
+      supplier_name: fields.supplierName.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+
+  if (error) throw error;
+
+  revalidatePath("/admin/pedidos");
+  return { ok: true as const };
+}
