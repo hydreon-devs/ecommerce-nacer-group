@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local agent tooling
 /.atl/
+
+# WhatsApp assistant repo (separate git repository, reference copy only)
+/asistente-nacer-group/
