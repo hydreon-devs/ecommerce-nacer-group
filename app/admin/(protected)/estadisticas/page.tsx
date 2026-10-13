@@ -12,7 +12,7 @@ import {
 import { PaymentMethodsChart, TopProductsChart, TrendChart } from "../pedidos/DashboardCharts";
 import { KpiTiles } from "../pedidos/KpiTiles";
 import { RefreshButton } from "../RefreshButton";
-import { PeriodFilter } from "./PeriodFilter";
+import { PeriodFilter } from "../PeriodFilter";
 
 export const metadata: Metadata = { title: "Estadísticas — Panel Nacer Group" };
 export const dynamic = "force-dynamic";

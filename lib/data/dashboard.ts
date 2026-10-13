@@ -9,7 +9,6 @@ export type { TrendPoint };
 export interface SalesSummary {
   totalVentas: number;
   pedidosVendidos: number;
-  pendientesDespacho: number;
 }
 
 export interface ProductQty {
@@ -27,7 +26,6 @@ interface PaidOrderRow {
   grand_total: number;
   confirmed_at: string;
   payment_source: string | null;
-  fulfillment_status: string | null;
 }
 
 /**
@@ -53,7 +51,7 @@ const getPaidOrders = cache(async (period: PeriodRange | null): Promise<PaidOrde
   while (rows.length < total) {
     let query = supabase
       .from("orders")
-      .select("id, grand_total, confirmed_at, payment_source, fulfillment_status", { count: "exact" })
+      .select("id, grand_total, confirmed_at, payment_source", { count: "exact" })
       .eq("status", "pagado")
       .not("confirmed_at", "is", null);
     if (period) query = query.gte("confirmed_at", period.desde).lt("confirmed_at", period.hasta);
@@ -76,14 +74,10 @@ export async function getSalesSummary(period: PeriodRange | null): Promise<Sales
   const orders = await getPaidOrders(period);
   const totalVentas = orders.reduce((sum, o) => sum + Number(o.grand_total), 0);
   const pedidosVendidos = orders.length;
-  const pendientesDespacho = orders.filter(
-    (o) => o.fulfillment_status === "en_construccion" || o.fulfillment_status === "en_despacho",
-  ).length;
 
   return {
     totalVentas,
     pedidosVendidos,
-    pendientesDespacho,
   };
 }
 

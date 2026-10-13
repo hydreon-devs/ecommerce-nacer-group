@@ -1,14 +1,35 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrderDetail } from "@/lib/data/orders";
-import { formatCop } from "@/lib/format";
-import { StaffFieldsInput } from "../StaffFieldsInput";
+import {
+  BuyerSection,
+  CardSection,
+  DeliverySection,
+  InvoiceSection,
+  PaymentSection,
+  ProductsSection,
+} from "./OrderDetailSections";
+import { DASH } from "../orderView";
+import { buildOrderDetailView, type StatusIndicator } from "./orderDetail";
 
 export const metadata: Metadata = { title: "Detalle de pedido — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
 
-const CARD_CLASS =
-  "rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]";
+function Indicator({ item }: { item: StatusIndicator }) {
+  return (
+    <div className="flex items-center gap-2">
+      <dt className="text-xs text-admin-ink-muted">{item.label}</dt>
+      <dd>
+        <span
+          className={`inline-block rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${item.pillClass}`}
+        >
+          {item.value}
+        </span>
+      </dd>
+    </div>
+  );
+}
 
 export default async function OrderDetailPage({
   params,
@@ -19,139 +40,92 @@ export default async function OrderDetailPage({
   const order = await getOrderDetail(id);
   if (!order) notFound();
 
-  const waitingForCustomer = order.status === "pagado" && !order.saleDetails?.submitted_at;
+  const view = buildOrderDetailView(order);
 
   return (
-    <div className="animate-view-in flex max-w-2xl flex-col gap-5">
-      <div>
-        <h1 className="font-admin-mono text-xl font-bold tracking-tight text-admin-ink">
-          Pedido {order.human_number}
-        </h1>
-        <p className="text-sm text-admin-ink-muted">Chat: {order.chat_id}</p>
-      </div>
-
-      <section className={CARD_CLASS}>
-        <h2 className="mb-2 text-sm font-semibold text-admin-ink">Gestión interna</h2>
-        <p className="mb-2 text-xs text-admin-ink-muted">
-          Texto libre — la artesana los registra hoy a mano (sin catálogo de asesores/
-          proveedores todavía).
-        </p>
-        <StaffFieldsInput
-          orderId={order.id}
-          advisorName={order.advisor_name}
-          supplierName={order.supplier_name}
-        />
-      </section>
-
-      {waitingForCustomer ? (
-        <p className="rounded-lg bg-admin-warning-bg px-3 py-2 text-sm text-admin-warning-fg">
-          Esperando datos del cliente — el formulario posventa todavía no se ha llenado. No
-          confundir con la fase de cumplimiento: son ejes distintos.
-        </p>
-      ) : null}
-
-      <section className={CARD_CLASS}>
-        <h2 className="mb-2 text-sm font-semibold text-admin-ink">Entrega y ocasión</h2>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm text-admin-ink-secondary">
-          <dt className="text-admin-ink-muted">Tipo de envío</dt>
-          <dd>{order.delivery_method ?? "—"}</dd>
-          <dt className="text-admin-ink-muted">KM / costo domicilio</dt>
-          <dd className="font-admin-mono">
-            {order.delivery_distance_km ?? "—"} km — {formatCop(order.delivery_fee)}
-          </dd>
-          <dt className="text-admin-ink-muted">Fecha de entrega</dt>
-          <dd>
-            {order.desired_delivery_date
-              ? new Date(order.desired_delivery_date).toLocaleDateString("es-CO")
-              : "—"}
-          </dd>
-          <dt className="text-admin-ink-muted">Ocasión</dt>
-          <dd>{order.occasion ?? "—"}</dd>
-        </dl>
-      </section>
-
-      <section className={CARD_CLASS}>
-        <h2 className="mb-2 text-sm font-semibold text-admin-ink">Líneas</h2>
-        <ul className="flex flex-col gap-1 text-sm text-admin-ink-secondary">
-          {order.lines.map((line) => (
-            <li key={line.variantSku} className="flex justify-between gap-4">
-              <span>
-                {line.productName} ({line.variantSku}) × {line.qty}
-              </span>
-              <span className="shrink-0 font-admin-mono text-admin-ink">
-                {formatCop(line.totalPrice)}
-              </span>
-            </li>
-          ))}
-          {order.lines.length === 0 ? (
-            <li className="text-admin-ink-muted">Sin líneas consumidas.</li>
-          ) : null}
-        </ul>
-        <div className="mt-3 flex justify-between border-t border-admin-border pt-2 text-sm font-semibold text-admin-ink">
-          <span>Total (con envío)</span>
-          <span className="font-admin-mono">{formatCop(order.grand_total)}</span>
+    <div className="animate-view-in flex flex-col gap-5">
+      <header className="flex flex-col gap-3">
+        <Link
+          href="/admin/pedidos"
+          className="inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Pedidos
+        </Link>
+        <div>
+          <h1 className="font-admin-mono text-xl font-bold tracking-tight text-admin-ink">
+            Pedido {view.humanNumber}
+          </h1>
+          <p className="text-sm text-admin-ink-muted">{view.dateLine}</p>
         </div>
-      </section>
+        <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {view.strip.map((key) => {
+            switch (key) {
+              case "state":
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <dt className="text-xs text-admin-ink-muted">Estado</dt>
+                    <dd>
+                      <span
+                        className={`inline-block rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${view.state.pillClass}`}
+                      >
+                        {view.state.value}
+                      </span>
+                    </dd>
+                  </div>
+                );
+              case "invoice":
+                return <Indicator key={key} item={view.invoiceStatus} />;
+              case "seller":
+                return (
+                  <div key={key} className="flex min-w-0 items-baseline gap-2">
+                    <dt className="text-xs text-admin-ink-muted">{view.seller.label}</dt>
+                    <dd
+                      className={`min-w-0 break-words text-sm ${
+                        view.seller.value === DASH
+                          ? "text-admin-ink-muted"
+                          : "text-admin-ink-secondary"
+                      }`}
+                    >
+                      {view.seller.value}
+                    </dd>
+                  </div>
+                );
+            }
+          })}
+        </dl>
+      </header>
 
-      {order.saleDetails?.submitted_at ? (
-        <section className={CARD_CLASS}>
-          <h2 className="mb-2 text-sm font-semibold text-admin-ink">
-            Datos de entrega y facturación (solo lectura)
-          </h2>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm text-admin-ink-secondary">
-            <dt className="text-admin-ink-muted">Comprador</dt>
-            <dd>
-              {order.saleDetails.buyer_name} — {order.saleDetails.buyer_email}
-            </dd>
-
-            <dt className="text-admin-ink-muted">Destinatario</dt>
-            <dd>
-              {order.saleDetails.recipient_name} — {order.saleDetails.recipient_phone}
-              {order.saleDetails.may_call_recipient ? " (se puede llamar)" : ""}
-            </dd>
-
-            <dt className="text-admin-ink-muted">Dirección</dt>
-            <dd>
-              {[
-                order.saleDetails.delivery_address_exact,
-                order.saleDetails.delivery_unit,
-                order.saleDetails.neighborhood,
-                order.saleDetails.city,
-                order.saleDetails.building_name,
-              ]
-                .filter(Boolean)
-                .join(", ")}
-            </dd>
-
-            {order.saleDetails.card_from || order.saleDetails.card_message ? (
-              <>
-                <dt className="text-admin-ink-muted">Tarjeta</dt>
-                <dd>
-                  De {order.saleDetails.card_from} para {order.saleDetails.card_to}
-                  {order.saleDetails.card_message ? `: "${order.saleDetails.card_message}"` : ""}
-                </dd>
-              </>
-            ) : null}
-
-            {order.saleDetails.special_notes ? (
-              <>
-                <dt className="text-admin-ink-muted">Notas</dt>
-                <dd>{order.saleDetails.special_notes}</dd>
-              </>
-            ) : null}
-
-            {order.saleDetails.wants_invoice ? (
-              <>
-                <dt className="text-admin-ink-muted">Facturación</dt>
-                <dd>
-                  {order.saleDetails.invoice_legal_name} — {order.saleDetails.invoice_tax_id} —{" "}
-                  {order.saleDetails.invoice_email}
-                </dd>
-              </>
-            ) : null}
-          </dl>
-        </section>
+      {view.waitingForCustomer ? (
+        <p className="rounded-lg bg-admin-warning-bg px-3 py-2 text-sm text-admin-warning-fg">
+          El pedido está pagado, pero el cliente todavía no llena el formulario posventa. Faltan
+          el destinatario, la dirección y la tarjeta.
+        </p>
       ) : null}
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <ProductsSection view={view} />
+          <CardSection view={view} />
+          <DeliverySection view={view} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-5">
+          <PaymentSection view={view} />
+          <BuyerSection view={view} />
+          <InvoiceSection view={view} />
+        </div>
+      </div>
     </div>
   );
 }

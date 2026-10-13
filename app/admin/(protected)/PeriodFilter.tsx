@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
+import { withParam } from "@/lib/domain/orderSearch";
 import { MONTH_NAMES, type PeriodSelection, type YearMonth } from "@/lib/domain/period";
 
 const LABEL = "text-xs text-admin-ink-muted";
@@ -13,6 +14,14 @@ interface PeriodFilterProps {
   /** Mes en curso en Bogotá: tope de lo seleccionable. */
   current: YearMonth;
   minYear: number;
+  /**
+   * Término de búsqueda activo de la pantalla (solo Pedidos lo pasa). Cambiar el
+   * periodo lo conserva y "Limpiar filtros" lo quita junto con el periodo.
+   * Sin esta prop el componente se comporta como siempre.
+   */
+  search?: string | null;
+  /** Estado activo (solo Pedidos): se conserva igual que la búsqueda y "Limpiar filtros" lo quita. */
+  estado?: string | null;
 }
 
 function toUrl(pathname: string, selection: PeriodSelection): string {
@@ -34,7 +43,7 @@ function toUrl(pathname: string, selection: PeriodSelection): string {
  * el servidor responde. "Limpiar filtros" siempre ocupa su sitio y se
  * deshabilita sin filtro activo, para que los selects no se desplacen.
  */
-export function PeriodFilter({ selected, current, minYear }: PeriodFilterProps) {
+export function PeriodFilter({ selected, current, minYear, search, estado }: PeriodFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -48,10 +57,13 @@ export function PeriodFilter({ selected, current, minYear }: PeriodFilterProps) 
 
   const lastMonth = year === current.year ? current.month : 12;
 
-  function go(next: PeriodSelection) {
+  function go(next: PeriodSelection, keepSearch = true) {
+    let url = toUrl(pathname, next);
+    if (keepSearch && search) url = withParam(url, "q", search);
+    if (keepSearch && estado) url = withParam(url, "estado", estado);
     startTransition(() => {
       setValue(next);
-      router.push(toUrl(pathname, next));
+      router.push(url);
     });
   }
 
@@ -125,8 +137,8 @@ export function PeriodFilter({ selected, current, minYear }: PeriodFilterProps) 
       </div>
       <button
         type="button"
-        onClick={() => go({ kind: "all" })}
-        disabled={value.kind === "all"}
+        onClick={() => go({ kind: "all" }, false)}
+        disabled={value.kind === "all" && !search && !estado}
         className="rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent disabled:opacity-60"
       >
         Limpiar filtros

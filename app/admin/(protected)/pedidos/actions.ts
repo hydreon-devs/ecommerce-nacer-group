@@ -2,60 +2,54 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin-client";
-import type { FulfillmentStatus } from "@/lib/data/orders";
+import { nextStep } from "@/lib/domain/fulfillmentFlow";
+
+/** Todas las pantallas que muestran la fase de cumplimiento. */
+function revalidateFulfillmentViews() {
+  for (const path of ["/admin/pedidos", "/admin/produccion", "/admin/despachos", "/admin/estadisticas"]) {
+    revalidatePath(path);
+  }
+}
 
 /**
- * No tiene sentido "en despacho" sobre un pedido que no está pagado (plan
- * §4.1) — se rechaza explícitamente en vez de escribir en silencio.
+ * Avanza un pedido a su siguiente paso (Producción y Despachos). Es la única
+ * escritura de la fase de cumplimiento desde el panel: el estado cambia por
+ * proceso, no a mano. El destino lo decide el servidor con `nextStep` a partir
+ * de lo guardado, no lo que diga el cliente; la escritura exige que la fase
+ * siga siendo la leída, así que un doble clic o dos personas a la vez no
+ * saltan pasos.
  */
-export async function setFulfillmentStatus(orderId: string, status: FulfillmentStatus) {
+export async function advanceFulfillment(orderId: string) {
   const supabase = createAdminClient();
 
   const { data: order, error: fetchError } = await supabase
     .from("orders")
-    .select("status")
+    .select("status, fulfillment_status, delivery_method")
     .eq("id", orderId)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
   if (!order) return { ok: false as const, error: "PEDIDO_NO_EXISTE" as const };
-  if (order.status !== "pagado") {
-    return { ok: false as const, error: "PEDIDO_NO_PAGADO" as const };
+
+  const step = nextStep(order);
+  if (!step) return { ok: false as const, error: "SIN_SIGUIENTE_PASO" as const };
+
+  const update = supabase
+    .from("orders")
+    .update({ fulfillment_status: step.to, updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .eq("status", "pagado");
+  const { data: changed, error } = await (
+    order.fulfillment_status === null
+      ? update.is("fulfillment_status", null)
+      : update.eq("fulfillment_status", order.fulfillment_status)
+  ).select("id");
+
+  if (error) throw error;
+  if (!changed || changed.length === 0) {
+    return { ok: false as const, error: "PEDIDO_CAMBIO" as const };
   }
 
-  const { error } = await supabase
-    .from("orders")
-    .update({ fulfillment_status: status, updated_at: new Date().toISOString() })
-    .eq("id", orderId);
-
-  if (error) throw error;
-
-  revalidatePath("/admin/pedidos");
-  return { ok: true as const };
-}
-
-/**
- * Asesor y proveedor son texto libre por decisión explícita (spec 003 §5.1):
- * la artesana los registra hoy a mano, sin tabla de catálogo todavía. Se
- * guarda tal cual, vacío se normaliza a null (no cadena vacía).
- */
-export async function setOrderStaffFields(
-  orderId: string,
-  fields: { advisorName: string; supplierName: string },
-) {
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("orders")
-    .update({
-      advisor_name: fields.advisorName.trim() || null,
-      supplier_name: fields.supplierName.trim() || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", orderId);
-
-  if (error) throw error;
-
-  revalidatePath("/admin/pedidos");
+  revalidateFulfillmentViews();
   return { ok: true as const };
 }

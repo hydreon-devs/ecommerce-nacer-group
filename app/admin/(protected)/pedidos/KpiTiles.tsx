@@ -38,8 +38,8 @@ function LinkLabel({ children }: { children: React.ReactNode }) {
  * Una sola superficie con las cuatro métricas separadas por líneas finas
  * (gap-px sobre fondo de borde). Tres celdas son enlaces y llevan un
  * chevron fijo: "Pedidos vendidos" a pedidos, "Carritos abiertos" a
- * carritos y "Pendientes de despacho" a producción (con el desglose por
- * fase de cumplimiento en una línea). Solo "Ventas del periodo" es estática.
+ * carritos y "En construcción" a producción (pagados del periodo que la
+ * artesana aún no marca como preparados). Solo "Ventas del periodo" es estática.
  */
 export function KpiTiles({
   summary,
@@ -70,11 +70,8 @@ export function KpiTiles({
           <p className="mt-1 text-xs text-admin-ink-muted">intentos de compra en curso</p>
         </Link>
         <Link href="/admin/produccion" className={LINK_CELL}>
-          <LinkLabel>Pendientes de despacho</LinkLabel>
-          <p className={VALUE}>{summary.pendientesDespacho}</p>
-          <p className="mt-1 text-xs text-admin-ink-muted">
-            {counts.enConstruccion} en construcción · {counts.enDespacho} en despacho
-          </p>
+          <LinkLabel>En construcción</LinkLabel>
+          <p className={VALUE}>{counts.enConstruccion}</p>
         </Link>
       </div>
     </section>

@@ -49,6 +49,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
           <NavLink href="/admin/pedidos">Pedidos</NavLink>
           <NavLink href="/admin/carritos">Carritos</NavLink>
           <NavLink href="/admin/produccion">Producción</NavLink>
+          <NavLink href="/admin/despachos">Despachos</NavLink>
           <NavLink href="/admin/productos">Productos</NavLink>
         </nav>
 

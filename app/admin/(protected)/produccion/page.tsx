@@ -1,34 +1,35 @@
 import type { Metadata } from "next";
-import { currentMonthPeriodBogota, getOrders } from "@/lib/data/orders";
+import { getProductionOrders } from "@/lib/data/orders";
+import { nextStep } from "@/lib/domain/fulfillmentFlow";
 import {
-  FULFILLMENT_LABELS,
-  FULFILLMENT_PILL_CLASS,
-  FULFILLMENT_PILL_CLASS_UNSET,
-} from "@/lib/domain/fulfillmentStatus";
+  ORDER_STATE_LABELS,
+  ORDER_STATE_PILL_CLASS,
+  deriveOrderState,
+  type OrderState,
+} from "@/lib/domain/orderState";
+import { AdvanceOrderButton } from "../AdvanceOrderButton";
 import { RefreshButton } from "../RefreshButton";
 import { SupplierInput } from "./SupplierInput";
 
 export const metadata: Metadata = { title: "Producción — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
 
-// Lo que ya está entregado o perdido no necesita más trabajo manual — se
-// ordena al final, no se oculta (la artesana puede querer revisarlo igual).
-const PENDING_FIRST: Record<string, number> = {
+// Lo que ya pasó por producción se ordena al final, no se oculta (la artesana
+// puede querer revisarlo igual). Todo pedido en construcción se muestra sin
+// importar el mes de pago; las demás fases, solo las del mes en curso.
+const PENDING_FIRST: Partial<Record<OrderState, number>> = {
   en_construccion: 0,
-  en_despacho: 1,
-  entregado: 2,
-  perdido: 2,
+  preparado: 1,
+  en_despacho: 2,
 };
 
 export default async function ProduccionPage() {
-  const period = currentMonthPeriodBogota();
-  const orders = await getOrders(period);
+  const orders = await getProductionOrders();
 
-  const sorted = [...orders].sort((a, b) => {
-    const rankA = a.fulfillment_status ? PENDING_FIRST[a.fulfillment_status] : -1;
-    const rankB = b.fulfillment_status ? PENDING_FIRST[b.fulfillment_status] : -1;
-    return rankA - rankB;
-  });
+  const sorted = [...orders].sort(
+    (a, b) =>
+      (PENDING_FIRST[deriveOrderState(a)] ?? 3) - (PENDING_FIRST[deriveOrderState(b)] ?? 3),
+  );
 
   return (
     <div className="animate-view-in flex flex-col gap-6">
@@ -36,7 +37,7 @@ export default async function ProduccionPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-admin-ink">Producción</h1>
           <p className="text-sm text-admin-ink-muted">
-            Pedidos del mes para armar — De, Para, producto y proveedor.
+            Pedidos por armar de cualquier mes, más los pagados del mes — De, Para, producto y proveedor.
           </p>
         </div>
         <RefreshButton />
@@ -45,12 +46,8 @@ export default async function ProduccionPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {sorted.map((order) => {
           const waitingForCustomer = !order.saleDetails?.submitted_at;
-          const pillClass = order.fulfillment_status
-            ? FULFILLMENT_PILL_CLASS[order.fulfillment_status]
-            : FULFILLMENT_PILL_CLASS_UNSET;
-          const statusLabel = order.fulfillment_status
-            ? FULFILLMENT_LABELS[order.fulfillment_status]
-            : "Sin definir";
+          const state = deriveOrderState(order);
+          const step = nextStep(order);
 
           return (
             <div
@@ -62,9 +59,9 @@ export default async function ProduccionPage() {
                   {order.human_number}
                 </span>
                 <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${pillClass}`}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${ORDER_STATE_PILL_CLASS[state]}`}
                 >
-                  {statusLabel}
+                  {ORDER_STATE_LABELS[state]}
                 </span>
               </div>
 
@@ -87,12 +84,16 @@ export default async function ProduccionPage() {
                 <label className="text-xs text-admin-ink-muted">Proveedor</label>
                 <SupplierInput orderId={order.id} supplierName={order.supplier_name} />
               </div>
+
+              {step?.to === "preparado" ? (
+                <AdvanceOrderButton orderId={order.id} label={step.label} />
+              ) : null}
             </div>
           );
         })}
         {sorted.length === 0 ? (
           <p className="col-span-full py-6 text-center text-sm text-admin-ink-muted">
-            Sin pedidos pagados en el periodo.
+            Sin pedidos por armar.
           </p>
         ) : null}
       </div>

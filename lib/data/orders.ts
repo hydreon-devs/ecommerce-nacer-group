@@ -1,4 +1,10 @@
 import "server-only";
+import { normalizeSearchTerm } from "@/lib/domain/orderSearch";
+import { getDeliveryZones } from "@/lib/data/panel-sale";
+import { isPanelChat, zoneNumberForFee } from "@/lib/domain/panelSale";
+import { RESERVATION_STATUSES, reservationStatusFor } from "@/lib/domain/reservationStatus";
+import type { FulfillmentStatus } from "@/lib/domain/fulfillmentStatus";
+import { estadoSpec, orderDate, type OrderFilterSpec, type OrderState } from "@/lib/domain/orderState";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import {
   bogotaDay,
@@ -11,7 +17,8 @@ export type { PeriodRange };
 // Se movió a lib/domain/period.ts (módulo puro y probado); se reexporta para los importadores existentes.
 export { bogotaDay };
 
-export type FulfillmentStatus = "en_construccion" | "en_despacho" | "entregado" | "perdido";
+// El tipo vive en lib/domain (módulo puro y probado); se reexporta para los importadores existentes.
+export type { FulfillmentStatus };
 
 export interface OrderListItem {
   id: string;
@@ -46,6 +53,8 @@ export interface OrderLineItem {
 
 export interface SaleDetails {
   submitted_at: string | null;
+  /** Celular del comprador; lo llenan las ventas del panel (en las del asistente el celular es `chat_id`). */
+  buyer_phone?: string | null;
   buyer_name: string | null;
   buyer_email: string | null;
   delivery_address_exact: string | null;
@@ -79,6 +88,8 @@ export interface OrderDetail extends OrderListItem {
   desired_delivery_date: string | null;
   lines: OrderLineItem[];
   saleDetails: SaleDetails | null;
+  /** Zona de domicilio (1 = primer tramo de tarifas); solo en pedidos del panel con domicilio. */
+  deliveryZone?: number | null;
 }
 
 /**
@@ -97,6 +108,8 @@ export interface OrderTableRow extends OrderListItem {
   totalQty: number;
   productCost: number;
   saleDetails: SaleDetails | null;
+  /** Zona de domicilio (1 = primer tramo de tarifas); solo en pedidos del panel con domicilio. */
+  deliveryZone?: number | null;
 }
 
 /**
@@ -171,42 +184,115 @@ export async function getOrderCounts(period: PeriodRange | null): Promise<OrderC
 
 interface OrderLineJoinRow {
   order_id: string;
+  status: string;
   qty: number;
   total_price: number;
   product_variants: { products: { name: string } | null } | null;
 }
 
+const ORDER_COLUMNS =
+  "id, human_number, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, delivery_distance_km, delivery_fee, payment_source, occasion, desired_delivery_date, advisor_name, supplier_name, created_at, confirmed_at";
+
+/** Fila de `orders` tal como sale de `ORDER_COLUMNS`, antes de sumarle líneas y `sale_details`. */
+type OrderRow = Omit<OrderTableRow, "productSummary" | "totalQty" | "productCost" | "saleDetails">;
+
+/** Lo mínimo del constructor de consultas que usa `applySpec` (el cliente no tiene tipos generados). */
+interface FilterableQuery<Q> {
+  eq(column: string, value: string): Q;
+  or(filters: string): Q;
+}
+
 /**
- * La tabla operativa completa (spec 003 §5) — todo lo que ya existe en
- * Supabase para igualar el Excel del negocio, en tres consultas en lote (no
- * una por fila): pedidos del periodo, sus líneas consumidas y su
- * `sale_details`.
+ * Aplica un Estado como condiciones de columna. Los valores de `spec` salen de
+ * constantes del dominio, nunca de la URL cruda, así que pueden ir en `.or()`.
  */
-export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderTableRow[]> {
+function applySpec<Q extends FilterableQuery<Q>>(query: Q, spec: OrderFilterSpec | null): Q {
+  if (!spec) return query;
+  let next = query.eq("status", spec.status);
+  if (spec.payment) {
+    next =
+      "eq" in spec.payment
+        ? next.eq("payment_status", spec.payment.eq)
+        : next.or(`payment_status.is.null,payment_status.neq.${spec.payment.notEq}`);
+  }
+  if (spec.fulfillment) {
+    const { eq, withNull } = spec.fulfillment;
+    next = withNull
+      ? next.or(`fulfillment_status.is.null,fulfillment_status.eq.${eq}`)
+      : next.eq("fulfillment_status", eq);
+  }
+  return next;
+}
+
+interface ListOptions {
+  period: PeriodRange | null;
+  limit: number;
+  search?: string | null;
+  spec?: OrderFilterSpec | null;
+}
+
+/**
+ * Pedidos de cualquier estado, del más reciente al más antiguo por su fecha
+ * (`confirmed_at` o, si aún no está confirmado, `created_at`). PostgREST no
+ * ordena por `coalesce`, así que se consultan por separado los confirmados
+ * (periodo y orden por `confirmed_at`) y los no confirmados (por
+ * `created_at`), cada uno con su tope, y se mezclan aquí: el resultado es el
+ * mismo que tendría un único orden por la fecha efectiva.
+ */
+async function listOrderRows({ period, limit, search, spec }: ListOptions): Promise<OrderRow[]> {
   const supabase = createAdminClient();
+  // El término se normaliza aquí también (idempotente) y llega a `ilike` como
+  // valor, nunca interpolado en un `.or()`: solo puede contener letras, dígitos y guiones.
+  const term = normalizeSearchTerm(search);
 
-  const { data: orders, error: ordersError } = await supabase
-    .from("orders")
-    .select(
-      "id, human_number, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, delivery_distance_km, delivery_fee, payment_source, occasion, desired_delivery_date, advisor_name, supplier_name, created_at, confirmed_at",
-    )
-    .not("confirmed_at", "is", null)
-    .gte("confirmed_at", period.desde)
-    .lt("confirmed_at", period.hasta)
-    .order("confirmed_at", { ascending: false })
-    .limit(limit);
+  const build = (confirmed: boolean) => {
+    const column = confirmed ? "confirmed_at" : "created_at";
+    let query = supabase.from("orders").select(ORDER_COLUMNS);
+    query = confirmed ? query.not("confirmed_at", "is", null) : query.is("confirmed_at", null);
+    if (period) query = query.gte(column, period.desde).lt(column, period.hasta);
+    if (term) query = query.ilike("human_number", `%${term}%`);
+    return applySpec(query, spec ?? null)
+      .order(column, { ascending: false })
+      .limit(limit);
+  };
 
-  if (ordersError) throw ordersError;
-  if (!orders || orders.length === 0) return [];
+  const [confirmed, unconfirmed] = await Promise.all([build(true), build(false)]);
+  if (confirmed.error) throw confirmed.error;
+  if (unconfirmed.error) throw unconfirmed.error;
 
+  return [...((confirmed.data ?? []) as OrderRow[]), ...((unconfirmed.data ?? []) as OrderRow[])]
+    .sort((a, b) => (orderDate(a) < orderDate(b) ? 1 : orderDate(a) > orderDate(b) ? -1 : 0))
+    .slice(0, limit);
+}
+
+/** Zona de un pedido del panel con domicilio, por el valor de domicilio cobrado; `null` en los demás. */
+async function zoneLookup(
+  orders: { chat_id: string; delivery_method: string | null }[],
+): Promise<(order: { chat_id: string; delivery_method: string | null; delivery_fee: number }) => number | null> {
+  const needed = orders.some((o) => isPanelChat(o.chat_id) && o.delivery_method === "domicilio");
+  const values = needed ? (await getDeliveryZones()).map((z) => z.value) : [];
+  return (order) =>
+    isPanelChat(order.chat_id) && order.delivery_method === "domicilio"
+      ? zoneNumberForFee(Number(order.delivery_fee), values)
+      : null;
+}
+
+/**
+ * Completa cada pedido con el resumen de líneas y `sale_details`, en dos
+ * consultas en lote (no una por fila).
+ */
+async function hydrateOrders(orders: OrderRow[]): Promise<OrderTableRow[]> {
+  if (orders.length === 0) return [];
+  const supabase = createAdminClient();
   const orderIds = orders.map((o) => o.id);
+  const zoneOf = await zoneLookup(orders);
 
   const [{ data: lineRows, error: linesError }, { data: saleDetailRows, error: saleError }] =
     await Promise.all([
       supabase
         .from("reservations")
-        .select("order_id, qty, total_price, product_variants(products(name))")
-        .eq("status", "consumida")
+        .select("order_id, status, qty, total_price, product_variants(products(name))")
+        .in("status", [...RESERVATION_STATUSES])
         .in("order_id", orderIds),
       supabase.from("sale_details").select("*").in("order_id", orderIds),
     ]);
@@ -214,8 +300,11 @@ export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderT
   if (linesError) throw linesError;
   if (saleError) throw saleError;
 
+  const statusByOrder = new Map(orders.map((o) => [o.id, reservationStatusFor(o.status)]));
   const linesByOrder = new Map<string, { names: string[]; qty: number; cost: number }>();
   for (const row of (lineRows ?? []) as unknown as OrderLineJoinRow[]) {
+    // Solo cuentan las líneas cuya reserva corresponde al estado del pedido.
+    if (row.status !== statusByOrder.get(row.order_id)) continue;
     const entry = linesByOrder.get(row.order_id) ?? { names: [], qty: 0, cost: 0 };
     const name = row.product_variants?.products?.name;
     if (name) entry.names.push(`${name} ×${row.qty}`);
@@ -237,8 +326,63 @@ export async function getOrders(period: PeriodRange, limit = 50): Promise<OrderT
       totalQty: summary?.qty ?? 0,
       productCost: summary?.cost ?? 0,
       saleDetails: saleDetailsByOrder.get(order.id) ?? null,
+      deliveryZone: zoneOf(order),
     };
   });
+}
+
+/**
+ * La tabla operativa completa (spec 003 §5): pedidos en cualquier estado,
+ * filtrados por periodo (sobre su fecha efectiva), búsqueda y Estado.
+ * `period` null = sin límite de fechas.
+ */
+export async function getOrders(
+  period: PeriodRange | null,
+  limit = 50,
+  search?: string | null,
+  estado?: OrderState | null,
+): Promise<OrderTableRow[]> {
+  const rows = await listOrderRows({
+    period,
+    limit,
+    search,
+    spec: estado ? estadoSpec(estado) : null,
+  });
+  return hydrateOrders(rows);
+}
+
+/** Tope de seguridad de los tableros de trabajo, que no se limitan por mes. */
+const BOARD_CAP = 500;
+
+function mergeById<T extends { id: string }>(...groups: T[][]): T[] {
+  const seen = new Set<string>();
+  return groups.flat().filter((o) => !seen.has(o.id) && seen.add(o.id));
+}
+
+/**
+ * Producción: todo pedido pagado en construcción sin importar el mes (uno
+ * pagado el 30 no desaparece el 1) más los pagados del mes en curso en
+ * cualquier fase, como ya mostraba el tablero.
+ */
+export async function getProductionOrders(): Promise<OrderTableRow[]> {
+  const [open, month] = await Promise.all([
+    listOrderRows({ period: null, limit: BOARD_CAP, spec: estadoSpec("en_construccion") }),
+    listOrderRows({ period: currentMonthPeriodBogota(), limit: 50, spec: { status: "pagado" } }),
+  ]);
+  return hydrateOrders(mergeById(open, month));
+}
+
+/** Despachos: pagados `preparado` (listos) y `en_despacho`, sin límite de mes. */
+export async function getDispatchOrders(): Promise<{
+  ready: OrderTableRow[];
+  inDispatch: OrderTableRow[];
+}> {
+  const [ready, inDispatch] = await Promise.all([
+    listOrderRows({ period: null, limit: BOARD_CAP, spec: estadoSpec("preparado") }),
+    listOrderRows({ period: null, limit: BOARD_CAP, spec: estadoSpec("en_despacho") }),
+  ]);
+  const [readyRows, inDispatchRows] = await Promise.all([hydrateOrders(ready), hydrateOrders(inDispatch)]);
+  return { ready: readyRows, inDispatch: inDispatchRows };
 }
 
 export async function getOrderDetail(orderId: string): Promise<OrderDetail | null> {
@@ -257,7 +401,7 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail | nul
     .from("reservations")
     .select("qty, unit_price, total_price, product_variants(sku, products(name))")
     .eq("order_id", orderId)
-    .eq("status", "consumida");
+    .eq("status", reservationStatusFor(order.status));
 
   if (reservationsError) throw reservationsError;
 
@@ -284,5 +428,6 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail | nul
 
   if (saleDetailsError) throw saleDetailsError;
 
-  return { ...order, lines, saleDetails: saleDetails ?? null };
+  const zoneOf = await zoneLookup([order]);
+  return { ...order, lines, saleDetails: saleDetails ?? null, deliveryZone: zoneOf(order) };
 }
