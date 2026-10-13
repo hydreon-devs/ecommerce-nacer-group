@@ -1,264 +1,218 @@
 "use client";
 
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import type { BrandTotal, MethodCount, ProductQty, TrendPoint } from "@/lib/data/dashboard";
-import type { FunnelCounts } from "@/lib/data/carts";
-import type { FulfillmentStatus, OrderCounts } from "@/lib/data/orders";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { MethodCount, ProductQty, TrendPoint } from "@/lib/data/dashboard";
 import { formatCop } from "@/lib/format";
-import { FULFILLMENT_LABELS } from "@/lib/domain/fulfillmentStatus";
-import { ORDER_STATUS_LABELS } from "@/lib/domain/orderStatus";
+import type { TrendGranularity } from "@/lib/domain/period";
 
 /**
- * Colores decididos por regla, no por gusto (plan §4.3-§4.4, validados con
- * la skill `dataviz`): un solo acento (moss, de marca) para series únicas;
- * la paleta técnica de 3 slots para identidad categórica (marca, método de
- * pago); colores de ESTADO reservados solo para la fase de cumplimiento,
- * nunca reutilizados como identidad.
+ * Un solo acento (moss, de marca) para la serie única de la tendencia. Las
+ * listas de productos y métodos de pago usan el mismo acento solo en sus
+ * barras; el texto siempre va en tokens de tinta.
  */
 const ACCENT = "var(--admin-accent)";
-const SERIES = ["var(--admin-series-blue)", "var(--admin-series-orange)", "var(--admin-series-aqua)"];
-const STATUS = {
-  entregado: "var(--admin-good)",
-  en_despacho: "var(--admin-warning-fg)",
-  en_construccion: "var(--admin-series-blue)",
-  perdido: "var(--admin-critical-fg)",
-};
-const ORDER_STATUS_COLOR = {
-  abierto: "var(--admin-series-blue)",
-  pagado: "var(--admin-good)",
-  vencido: "var(--admin-warning-fg)",
-  cancelado: "var(--admin-critical-fg)",
-};
 
 const TOOLTIP_STYLE = {
   background: "var(--admin-surface-raised)",
-  border: "1px solid var(--admin-border)",
+  border: "1px solid transparent",
+  boxShadow: "var(--admin-shadow-card)",
   borderRadius: 8,
   fontSize: 12,
   color: "var(--admin-ink)",
 };
 
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+/**
+ * `getSalesTrend` ya entrega el día o mes en hora de Bogotá (`bucketTrend`):
+ * se formatea por partes, sin `new Date(...)`, que lo interpretaría como UTC
+ * y correría el día. Por mes lleva el año ("oct 2026"): con todo el tiempo
+ * la serie cruza años y "oct" solo sería ambiguo.
+ */
+function formatTrendLabel(key: string, granularity: TrendGranularity): string {
+  const [year, month, day] = key.split("-");
+  const label = MONTHS[Number(month) - 1];
+  if (!label) return key;
+  return granularity === "day" ? `${Number(day)} ${label}` : `${label} ${year}`;
+}
+
+/**
+ * `flex-col` + el `h-full` implícito del grid: la tarjeta se estira a la
+ * altura de su celda y el contenido (`flex-1`) reparte el resto.
+ */
 function CardShell({
   title,
   subtitle,
+  className = "",
   children,
 }: {
   title: string;
   subtitle: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]">
-      <h2 className="mb-0.5 text-[12.5px] font-semibold text-admin-ink">{title}</h2>
-      <p className="mb-3 text-[11px] text-admin-ink-muted">{subtitle}</p>
+    <section
+      className={`flex min-w-0 flex-col rounded-xl border border-transparent bg-admin-surface-raised p-5 shadow-admin-card ${className}`}
+    >
+      <h2 className="text-sm font-semibold text-admin-ink">{title}</h2>
+      <p className="mb-4 text-xs text-admin-ink-muted">{subtitle}</p>
       {children}
-    </div>
+    </section>
   );
 }
 
-export function TrendChart({ data }: { data: TrendPoint[] }) {
+export function TrendChart({
+  data,
+  granularity,
+  className,
+}: {
+  data: TrendPoint[];
+  granularity: TrendGranularity;
+  className?: string;
+}) {
+  const total = data.reduce((sum, p) => sum + p.total, 0);
+  const unit = granularity === "day" ? "día" : "mes";
+  const units = granularity === "day" ? "días" : "meses";
+  const formatLabel = (key: string) => formatTrendLabel(key, granularity);
+
   return (
-    <CardShell title="Tendencia de ventas" subtitle="Días con ventas confirmadas en el periodo">
-      <ResponsiveContainer width="100%" height={180}>
-        <AreaChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
-          <CartesianGrid stroke="var(--admin-border)" vertical={false} />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11, fill: "var(--admin-ink-muted)" }}
-            axisLine={{ stroke: "var(--admin-border-strong)" }}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fill: "var(--admin-ink-muted)" }}
-            axisLine={false}
-            tickLine={false}
-            width={44}
-            tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
-          />
-          <Tooltip
-            contentStyle={TOOLTIP_STYLE}
-            formatter={(value) => [formatCop(Number(value)), "Ventas"]}
-          />
-          <Area type="monotone" dataKey="total" stroke={ACCENT} fill={ACCENT} fillOpacity={0.18} strokeWidth={2.5} />
-        </AreaChart>
-      </ResponsiveContainer>
+    <CardShell
+      className={className}
+      title="Tendencia de ventas"
+      subtitle={`${granularity === "day" ? "Días" : "Meses"} con ventas confirmadas en el periodo`}
+    >
       {data.length === 0 ? (
-        <p className="mt-2 text-center text-[11.5px] text-admin-ink-muted">
+        <p className="flex min-h-40 flex-1 items-center justify-center text-center text-sm text-admin-ink-muted">
           Sin ventas confirmadas en el periodo.
         </p>
-      ) : null}
+      ) : (
+        <figure
+          className="flex min-h-0 flex-1 flex-col"
+          aria-label={`Ventas por ${unit}: ${data.length} ${units} con ventas, ${formatCop(total)} en total`}
+        >
+          {/* El contenedor ocupa el alto sobrante de la tarjeta (mínimo 240px, el alto de antes);
+              el gráfico va en un hijo absoluto porque ResponsiveContainer necesita un padre con alto resuelto. */}
+          <div aria-hidden="true" className="relative min-h-60 flex-1">
+            <div className="absolute inset-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                <CartesianGrid stroke="var(--admin-border)" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 12, fill: "var(--admin-ink-muted)" }}
+                  axisLine={{ stroke: "var(--admin-border-strong)" }}
+                  tickLine={false}
+                  tickFormatter={formatLabel}
+                  minTickGap={24}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: "var(--admin-ink-muted)" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={44}
+                  tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
+                />
+                <Tooltip
+                  contentStyle={TOOLTIP_STYLE}
+                  isAnimationActive={false}
+                  labelFormatter={(label) => formatLabel(String(label))}
+                  formatter={(value) => [formatCop(Number(value)), "Ventas"]}
+                />
+                {/* 'auto' ya se desactiva con prefers-reduced-motion (recharts usePrefersReducedMotion) */}
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke={ACCENT}
+                  fill={ACCENT}
+                  fillOpacity={0.18}
+                  strokeWidth={2}
+                  animationDuration={300}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+            </div>
+          </div>
+          <figcaption className="sr-only">
+            <table>
+              <caption>Ventas confirmadas por {unit}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{granularity === "day" ? "Fecha" : "Mes"}</th>
+                  <th scope="col">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((p) => (
+                  <tr key={p.date}>
+                    <th scope="row">{formatLabel(p.date)}</th>
+                    <td>{formatCop(p.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </figcaption>
+        </figure>
+      )}
     </CardShell>
   );
 }
 
-export function BrandChart({ data }: { data: BrandTotal[] }) {
-  return (
-    <CardShell title="Ventas por marca" subtitle="Periodo actual">
-      <ResponsiveContainer width="100%" height={140}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-          <XAxis type="number" hide />
-          <YAxis
-            type="category"
-            dataKey="brand"
-            tick={{ fontSize: 11.5, fill: "var(--admin-ink-secondary)" }}
-            axisLine={false}
-            tickLine={false}
-            width={70}
-          />
-          <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v) => formatCop(Number(v))} />
-          <Bar dataKey="total" radius={[0, 4, 4, 0]} maxBarSize={18}>
-            {data.map((entry, i) => (
-              <Cell key={entry.brand} fill={SERIES[i % SERIES.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </CardShell>
-  );
-}
+export function TopProductsChart({ data, className }: { data: ProductQty[]; className?: string }) {
+  const max = Math.max(1, ...data.map((p) => p.qty));
 
-export function TopProductsChart({ data }: { data: ProductQty[] }) {
   return (
-    <CardShell title="Productos más vendidos" subtitle="Unidades del periodo">
-      <ResponsiveContainer width="100%" height={Math.max(80, data.length * 26)}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-          <XAxis type="number" hide allowDecimals={false} />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={{ fontSize: 11.5, fill: "var(--admin-ink-secondary)" }}
-            axisLine={false}
-            tickLine={false}
-            width={110}
-          />
-          <Tooltip contentStyle={TOOLTIP_STYLE} />
-          <Bar dataKey="qty" fill={ACCENT} radius={[0, 4, 4, 0]} maxBarSize={14} />
-        </BarChart>
-      </ResponsiveContainer>
+    <CardShell className={className} title="Productos más vendidos" subtitle="Unidades del periodo">
       {data.length === 0 ? (
-        <p className="text-center text-[11.5px] text-admin-ink-muted">Sin unidades vendidas.</p>
-      ) : null}
+        <p className="flex min-h-24 flex-1 items-center justify-center text-center text-sm text-admin-ink-muted">Sin unidades vendidas.</p>
+      ) : (
+        <ol className="flex flex-col gap-3">
+          {data.map((p) => (
+            <li key={p.name}>
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-admin-ink-secondary" title={p.name}>
+                  {p.name}
+                </span>
+                <span className="font-admin-mono tabular-nums text-admin-ink">{p.qty}</span>
+              </div>
+              <div className="mt-1 h-1 rounded-full bg-admin-surface-sunken" aria-hidden="true">
+                <div
+                  className="h-full rounded-full bg-admin-accent"
+                  style={{ width: `${(p.qty / max) * 100}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
     </CardShell>
   );
 }
 
-export function PaymentMethodsChart({ data }: { data: MethodCount[] }) {
+export function PaymentMethodsChart({ data, className }: { data: MethodCount[]; className?: string }) {
+  const total = data.reduce((sum, m) => sum + m.count, 0);
+
   return (
-    <CardShell title="Métodos de pago" subtitle="Pedidos pagados del periodo">
-      <ResponsiveContainer width="100%" height={Math.max(80, data.length * 30)}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-          <XAxis type="number" hide allowDecimals={false} />
-          <YAxis
-            type="category"
-            dataKey="method"
-            tick={{ fontSize: 11.5, fill: "var(--admin-ink-secondary)" }}
-            axisLine={false}
-            tickLine={false}
-            width={90}
-          />
-          <Tooltip contentStyle={TOOLTIP_STYLE} />
-          <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={16}>
-            {data.map((entry, i) => (
-              <Cell key={entry.method} fill={SERIES[i % SERIES.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <CardShell className={className} title="Métodos de pago" subtitle="Pedidos pagados del periodo">
       {data.length === 0 ? (
-        <p className="text-center text-[11.5px] text-admin-ink-muted">Sin pagos en el periodo.</p>
-      ) : null}
-    </CardShell>
-  );
-}
-
-export function FulfillmentChart({ counts }: { counts: OrderCounts }) {
-  const data = [
-    { key: "entregado", value: counts.entregados },
-    { key: "en_despacho", value: counts.enDespacho },
-    { key: "en_construccion", value: counts.enConstruccion },
-    { key: "perdido", value: counts.perdidos },
-  ];
-
-  return (
-    <CardShell title="Fase de cumplimiento" subtitle="Pedidos pagados del periodo">
-      <ResponsiveContainer width="100%" height={120}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-          <XAxis type="number" hide allowDecimals={false} />
-          <YAxis
-            type="category"
-            dataKey="key"
-            tickFormatter={(k: string) => FULFILLMENT_LABELS[k as FulfillmentStatus] ?? k}
-            tick={{ fontSize: 11.5, fill: "var(--admin-ink-secondary)" }}
-            axisLine={false}
-            tickLine={false}
-            width={94}
-          />
-          <Tooltip
-            contentStyle={TOOLTIP_STYLE}
-            labelFormatter={(k) => FULFILLMENT_LABELS[String(k) as FulfillmentStatus] ?? String(k)}
-          />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={16}>
-            {data.map((entry) => (
-              <Cell key={entry.key} fill={STATUS[entry.key as keyof typeof STATUS]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </CardShell>
-  );
-}
-
-/**
- * Embudo de conversión: pedidos **iniciados** en el periodo, por estado
- * final. Filtrado por `created_at`, no `confirmed_at` — es la única forma
- * de incluir los que nunca llegaron a pagarse. El número de "Pagado" aquí
- * puede diferir del KPI "Pedidos vendidos" de arriba, que cuenta por
- * `confirmed_at` — son dos preguntas distintas (lib/data/carts.ts).
- */
-export function FunnelChart({ counts }: { counts: FunnelCounts }) {
-  const data = [
-    { key: "abierto", value: counts.abierto },
-    { key: "pagado", value: counts.pagado },
-    { key: "vencido", value: counts.vencido },
-    { key: "cancelado", value: counts.cancelado },
-  ];
-
-  return (
-    <CardShell title="Embudo de conversión" subtitle="Pedidos iniciados en el periodo, por resultado">
-      <ResponsiveContainer width="100%" height={120}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-          <XAxis type="number" hide allowDecimals={false} />
-          <YAxis
-            type="category"
-            dataKey="key"
-            tickFormatter={(k: string) => ORDER_STATUS_LABELS[k] ?? k}
-            tick={{ fontSize: 11.5, fill: "var(--admin-ink-secondary)" }}
-            axisLine={false}
-            tickLine={false}
-            width={80}
-          />
-          <Tooltip
-            contentStyle={TOOLTIP_STYLE}
-            labelFormatter={(k) => ORDER_STATUS_LABELS[String(k)] ?? String(k)}
-          />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={16}>
-            {data.map((entry) => (
-              <Cell key={entry.key} fill={ORDER_STATUS_COLOR[entry.key as keyof typeof ORDER_STATUS_COLOR]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+        <p className="flex min-h-24 flex-1 items-center justify-center text-center text-sm text-admin-ink-muted">Sin pagos en el periodo.</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {data.map((m) => (
+            <li key={m.method} className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="min-w-0 truncate text-admin-ink-secondary" title={m.method}>
+                {m.method}
+              </span>
+              <span className="flex shrink-0 items-baseline gap-3 font-admin-mono tabular-nums">
+                <span className="text-admin-ink">{m.count}</span>
+                <span className="w-10 text-right text-admin-ink-muted">
+                  {Math.round((m.count / total) * 100)}%
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </CardShell>
   );
 }

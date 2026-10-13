@@ -1,5 +1,15 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import {
+  bogotaDay,
+  bogotaYearMonth,
+  periodForMonth,
+  type PeriodRange,
+} from "@/lib/domain/period";
+
+export type { PeriodRange };
+// Se movió a lib/domain/period.ts (módulo puro y probado); se reexporta para los importadores existentes.
+export { bogotaDay };
 
 export type FulfillmentStatus = "en_construccion" | "en_despacho" | "entregado" | "perdido";
 
@@ -24,11 +34,6 @@ export interface OrderCounts {
   enDespacho: number;
   entregados: number;
   perdidos: number;
-}
-
-export interface PeriodRange {
-  desde: string;
-  hasta: string;
 }
 
 export interface OrderLineItem {
@@ -94,36 +99,45 @@ export interface OrderTableRow extends OrderListItem {
   saleDetails: SaleDetails | null;
 }
 
-const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
-
 /**
  * Primer instante del mes en curso en America/Bogota (UTC-5 fijo, sin
  * horario de verano), expresado como rango UTC para filtrar `confirmed_at`.
  */
 export function currentMonthPeriodBogota(): PeriodRange {
-  const bogotaNow = new Date(Date.now() - BOGOTA_OFFSET_MS);
-  const year = bogotaNow.getUTCFullYear();
-  const month = bogotaNow.getUTCMonth();
-
-  const startOfMonthBogota = Date.UTC(year, month, 1, 0, 0, 0);
-  const startOfNextMonthBogota = Date.UTC(year, month + 1, 1, 0, 0, 0);
-
-  return {
-    desde: new Date(startOfMonthBogota + BOGOTA_OFFSET_MS).toISOString(),
-    hasta: new Date(startOfNextMonthBogota + BOGOTA_OFFSET_MS).toISOString(),
-  };
+  const { year, month } = bogotaYearMonth(new Date());
+  return periodForMonth(year, month);
 }
 
+/**
+ * Año (Bogotá) de la primera venta confirmada: límite inferior del filtro de
+ * año de Estadísticas. Usa `confirmed_at`, la misma fecha que filtran las
+ * consultas de ventas; sin pedidos confirmados devuelve el año en curso.
+ */
+export async function getEarliestOrderYear(): Promise<number> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("confirmed_at")
+    .not("confirmed_at", "is", null)
+    .order("confirmed_at", { ascending: true })
+    .limit(1);
+
+  if (error) throw error;
+
+  const first = data?.[0]?.confirmed_at;
+  return bogotaYearMonth(first ? new Date(first) : new Date()).year;
+}
+
+/** `period = null` es "todo el tiempo": solo exige que el pedido esté confirmado. */
 function ordersConfirmedInPeriod(
   supabase: ReturnType<typeof createAdminClient>,
-  period: PeriodRange,
+  period: PeriodRange | null,
 ) {
-  return supabase
+  const query = supabase
     .from("orders")
     .select("*", { count: "exact", head: true })
-    .not("confirmed_at", "is", null)
-    .gte("confirmed_at", period.desde)
-    .lt("confirmed_at", period.hasta);
+    .not("confirmed_at", "is", null);
+  return period ? query.gte("confirmed_at", period.desde).lt("confirmed_at", period.hasta) : query;
 }
 
 /**
@@ -131,7 +145,7 @@ function ordersConfirmedInPeriod(
  * filtrados por `confirmed_at`, nunca `created_at` (plan §4.1: `created_at`
  * cuenta carritos abandonados que nunca fueron una venta).
  */
-export async function getOrderCounts(period: PeriodRange): Promise<OrderCounts> {
+export async function getOrderCounts(period: PeriodRange | null): Promise<OrderCounts> {
   const supabase = createAdminClient();
 
   const [vendidos, enConstruccion, enDespacho, entregados, perdidos] = await Promise.all([

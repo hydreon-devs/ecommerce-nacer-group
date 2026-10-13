@@ -1,22 +1,15 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import { cache } from "react";
+import { bucketTrend, type TrendGranularity, type TrendPoint } from "@/lib/domain/period";
 import type { PeriodRange } from "./orders";
+
+export type { TrendPoint };
 
 export interface SalesSummary {
   totalVentas: number;
   pedidosVendidos: number;
-  ticketPromedio: number;
   pendientesDespacho: number;
-}
-
-export interface TrendPoint {
-  date: string;
-  total: number;
-}
-
-export interface BrandTotal {
-  brand: string;
-  total: number;
 }
 
 export interface ProductQty {
@@ -37,22 +30,49 @@ interface PaidOrderRow {
   fulfillment_status: string | null;
 }
 
-async function getPaidOrders(period: PeriodRange): Promise<PaidOrderRow[]> {
+/**
+ * PostgREST corta cada respuesta en su `max_rows` (1000 por defecto en
+ * Supabase). Con "todo el tiempo" eso truncaría los totales en silencio, así
+ * que se pagina hasta cubrir el conteo exacto. El orden incluye `id` para que
+ * las páginas no se solapen con empates en `confirmed_at`, y el avance usa las
+ * filas realmente devueltas, por si el límite del proyecto es menor al tamaño
+ * de página.
+ */
+const PAGE_SIZE = 1000;
+
+/**
+ * `cache` de React deduplica por solicitud: las cuatro consultas de la
+ * pantalla comparten una sola lectura mientras reciban el mismo `period`
+ * (misma referencia, o `null`).
+ */
+const getPaidOrders = cache(async (period: PeriodRange | null): Promise<PaidOrderRow[]> => {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select("id, grand_total, confirmed_at, payment_source, fulfillment_status")
-    .eq("status", "pagado")
-    .not("confirmed_at", "is", null)
-    .gte("confirmed_at", period.desde)
-    .lt("confirmed_at", period.hasta)
-    .order("confirmed_at", { ascending: true });
+  const rows: PaidOrderRow[] = [];
+  let total = Infinity;
 
-  if (error) throw error;
-  return data ?? [];
-}
+  while (rows.length < total) {
+    let query = supabase
+      .from("orders")
+      .select("id, grand_total, confirmed_at, payment_source, fulfillment_status", { count: "exact" })
+      .eq("status", "pagado")
+      .not("confirmed_at", "is", null);
+    if (period) query = query.gte("confirmed_at", period.desde).lt("confirmed_at", period.hasta);
 
-export async function getSalesSummary(period: PeriodRange): Promise<SalesSummary> {
+    const { data, count, error } = await query
+      .order("confirmed_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(rows.length, rows.length + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    total = count ?? 0;
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+  }
+
+  return rows;
+});
+
+export async function getSalesSummary(period: PeriodRange | null): Promise<SalesSummary> {
   const orders = await getPaidOrders(period);
   const totalVentas = orders.reduce((sum, o) => sum + Number(o.grand_total), 0);
   const pedidosVendidos = orders.length;
@@ -63,26 +83,18 @@ export async function getSalesSummary(period: PeriodRange): Promise<SalesSummary
   return {
     totalVentas,
     pedidosVendidos,
-    ticketPromedio: pedidosVendidos > 0 ? Math.round(totalVentas / pedidosVendidos) : 0,
     pendientesDespacho,
   };
 }
 
-export async function getSalesTrend(period: PeriodRange): Promise<TrendPoint[]> {
-  const orders = await getPaidOrders(period);
-  const byDay = new Map<string, number>();
-
-  for (const order of orders) {
-    const day = order.confirmed_at.slice(0, 10);
-    byDay.set(day, (byDay.get(day) ?? 0) + Number(order.grand_total));
-  }
-
-  return Array.from(byDay.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, total]) => ({ date, total }));
+export async function getSalesTrend(
+  period: PeriodRange | null,
+  granularity: TrendGranularity,
+): Promise<TrendPoint[]> {
+  return bucketTrend(await getPaidOrders(period), granularity);
 }
 
-export async function getPaymentMethods(period: PeriodRange): Promise<MethodCount[]> {
+export async function getPaymentMethods(period: PeriodRange | null): Promise<MethodCount[]> {
   const orders = await getPaidOrders(period);
   const byMethod = new Map<string, number>();
 
@@ -96,40 +108,48 @@ export async function getPaymentMethods(period: PeriodRange): Promise<MethodCoun
 
 interface ReservationLineRow {
   qty: number;
-  total_price: number;
   order_id: string;
   product_variants: {
-    products: { name: string; brand: string } | null;
+    products: { name: string } | null;
   } | null;
 }
 
+/**
+ * Los ids viajan en la URL de la solicitud (`in.(uuid,uuid,...)`): cada uuid
+ * ocupa ~37 caracteres, así que unos cientos ya rozan los límites habituales
+ * de URL. Se consulta por lotes. Cada lote se pagina además por si sus
+ * reservas superan `max_rows`.
+ */
+const ID_BATCH = 100;
+
 async function getPaidOrderLines(orderIds: string[]): Promise<ReservationLineRow[]> {
-  if (orderIds.length === 0) return [];
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("reservations")
-    .select("qty, total_price, order_id, product_variants(products(name, brand))")
-    .eq("status", "consumida")
-    .in("order_id", orderIds);
+  const lines: ReservationLineRow[] = [];
 
-  if (error) throw error;
-  return (data ?? []) as unknown as ReservationLineRow[];
-}
+  for (let i = 0; i < orderIds.length; i += ID_BATCH) {
+    const batch = orderIds.slice(i, i + ID_BATCH);
+    let fetched = 0;
+    let total = Infinity;
+    while (fetched < total) {
+      const { data, count, error } = await supabase
+        .from("reservations")
+        .select("qty, order_id, product_variants(products(name))", { count: "exact" })
+        .eq("status", "consumida")
+        .in("order_id", batch)
+        .order("id", { ascending: true })
+        .range(fetched, fetched + PAGE_SIZE - 1);
 
-export async function getSalesByBrand(period: PeriodRange): Promise<BrandTotal[]> {
-  const orders = await getPaidOrders(period);
-  const lines = await getPaidOrderLines(orders.map((o) => o.id));
-  const byBrand = new Map<string, number>();
-
-  for (const line of lines) {
-    const brand = line.product_variants?.products?.brand ?? "sin marca";
-    byBrand.set(brand, (byBrand.get(brand) ?? 0) + Number(line.total_price));
+      if (error) throw error;
+      total = count ?? 0;
+      if (!data || data.length === 0) break;
+      lines.push(...(data as unknown as ReservationLineRow[]));
+      fetched += data.length;
+    }
   }
-
-  return Array.from(byBrand.entries()).map(([brand, total]) => ({ brand, total }));
+  return lines;
 }
 
-export async function getTopProducts(period: PeriodRange, limit = 8): Promise<ProductQty[]> {
+export async function getTopProducts(period: PeriodRange | null, limit = 8): Promise<ProductQty[]> {
   const orders = await getPaidOrders(period);
   const lines = await getPaidOrderLines(orders.map((o) => o.id));
   const byProduct = new Map<string, number>();

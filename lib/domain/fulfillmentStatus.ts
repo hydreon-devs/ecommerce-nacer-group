@@ -3,9 +3,8 @@ import type { FulfillmentStatus } from "@/lib/data/orders";
 /**
  * Fuente única del rótulo y color de cada fase de cumplimiento — antes vivía
  * duplicado en `FulfillmentStatusSelect` (editable) y ahora también lo
- * necesita la tarjeta de solo lectura del tablero de producción. Mismo
- * mapeo que las gráficas de estado (`DashboardCharts.tsx`): un color de
- * estado nunca dobla como identidad categórica en otro sitio.
+ * necesita la tarjeta de solo lectura del tablero de producción. Un color
+ * de estado nunca dobla como identidad categórica en otro sitio.
  */
 export const FULFILLMENT_LABELS: Record<FulfillmentStatus, string> = {
   en_construccion: "En construcción",

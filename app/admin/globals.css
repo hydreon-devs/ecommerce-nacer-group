@@ -36,6 +36,8 @@
   --admin-series-blue: #2a78d6;
   --admin-series-orange: #eb6834;
   --admin-series-aqua: #1baf7a;
+  --admin-shadow-card:
+    0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 2px -1px oklch(0 0 0 / 0.06), 0 2px 4px 0 oklch(0 0 0 / 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -60,6 +62,7 @@
     --admin-series-blue: #3987e5;
     --admin-series-orange: #d95926;
     --admin-series-aqua: #199e70;
+    --admin-shadow-card: 0 0 0 1px oklch(1 0 0 / 0.08);
   }
 }
 
@@ -84,6 +87,7 @@
   --admin-series-blue: #3987e5;
   --admin-series-orange: #d95926;
   --admin-series-aqua: #199e70;
+  --admin-shadow-card: 0 0 0 1px oklch(1 0 0 / 0.08);
 }
 
 @theme inline {
@@ -106,6 +110,7 @@
   --color-admin-series-blue: var(--admin-series-blue);
   --color-admin-series-orange: var(--admin-series-orange);
   --color-admin-series-aqua: var(--admin-series-aqua);
+  --shadow-admin-card: var(--admin-shadow-card);
   --font-admin-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
 }
 
@@ -159,22 +164,8 @@ body.admin-shell {
   }
 }
 
-/* Animaciones breves aprobadas en la maqueta (specs/003) — entrada de
-   tarjetas/vistas, nunca looping ni decorativa. */
-@keyframes admin-kpi-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-kpi-in {
-  animation: admin-kpi-in 420ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
-}
-
+/* Animación breve aprobada en la maqueta (specs/003) — entrada de vista,
+   nunca looping ni decorativa. */
 @keyframes admin-view-in {
   from {
     opacity: 0;

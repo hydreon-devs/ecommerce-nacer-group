@@ -99,20 +99,29 @@ export async function getIncompleteOrders(period: PeriodRange): Promise<Incomple
  * sin importar cuándo se iniciaron) — son dos preguntas distintas, no un
  * error de conteo.
  */
-export async function getFunnelCounts(period: PeriodRange): Promise<FunnelCounts> {
+export async function getFunnelCounts(period: PeriodRange | null): Promise<FunnelCounts> {
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("status")
-    .gte("created_at", period.desde)
-    .lt("created_at", period.hasta);
+  // Un conteo exacto por estado: `head: true` no trae filas, así que el
+  // límite de filas de PostgREST no puede truncar el total. `period = null`
+  // es "todo el tiempo".
+  const countStatus = async (status: keyof FunnelCounts) => {
+    const query = supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", status);
+    const { count, error } = period
+      ? await query.gte("created_at", period.desde).lt("created_at", period.hasta)
+      : await query;
+    if (error) throw error;
+    return count ?? 0;
+  };
 
-  if (error) throw error;
-
-  const counts: FunnelCounts = { abierto: 0, pagado: 0, vencido: 0, cancelado: 0 };
-  for (const row of data ?? []) {
-    if (row.status in counts) counts[row.status as keyof FunnelCounts] += 1;
-  }
-  return counts;
+  const [abierto, pagado, vencido, cancelado] = await Promise.all([
+    countStatus("abierto"),
+    countStatus("pagado"),
+    countStatus("vencido"),
+    countStatus("cancelado"),
+  ]);
+  return { abierto, pagado, vencido, cancelado };
 }
