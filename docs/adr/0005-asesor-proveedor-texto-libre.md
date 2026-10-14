@@ -44,3 +44,10 @@ con certeza que fue el agente quien cerró la venta.
 - Si el volumen de proveedores/asesores crece y aparecen typos duplicando el mismo nombre de
   formas distintas, la migración natural es la Opción descartada arriba — aditiva, no
   destructiva.
+
+## Revisión 2026-10-13
+
+`supplier_name` significa el proveedor de las mariposas, no quien arma el pedido. Para
+quien lo arma se agregó `orders.artisan_name`, también texto libre y nullable con el mismo
+criterio de este ADR (migración en `docs/plans/2026-10-13-add-artisan-name.sql`). La vista
+de Producción escribe ambos campos, que registra la artesana.

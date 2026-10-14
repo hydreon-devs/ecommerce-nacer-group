@@ -179,3 +179,19 @@ body.admin-shell {
 .animate-view-in {
   animation: admin-view-in 320ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
 }
+
+/* Diálogo de detalles de Producción: fundido con un leve ascenso, 200 ms. El
+   bloque de prefers-reduced-motion de arriba lo reduce a un corte. */
+@keyframes admin-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-dialog-in {
+  animation: admin-dialog-in 200ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}

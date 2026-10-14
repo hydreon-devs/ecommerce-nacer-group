@@ -9,7 +9,6 @@ import { createAdminClient } from "@/lib/supabase/admin-client";
 import {
   bogotaDay,
   bogotaYearMonth,
-  periodForMonth,
   type PeriodRange,
 } from "@/lib/domain/period";
 
@@ -110,15 +109,6 @@ export interface OrderTableRow extends OrderListItem {
   saleDetails: SaleDetails | null;
   /** Zona de domicilio (1 = primer tramo de tarifas); solo en pedidos del panel con domicilio. */
   deliveryZone?: number | null;
-}
-
-/**
- * Primer instante del mes en curso en America/Bogota (UTC-5 fijo, sin
- * horario de verano), expresado como rango UTC para filtrar `confirmed_at`.
- */
-export function currentMonthPeriodBogota(): PeriodRange {
-  const { year, month } = bogotaYearMonth(new Date());
-  return periodForMonth(year, month);
 }
 
 /**
@@ -353,24 +343,6 @@ export async function getOrders(
 
 /** Tope de seguridad de los tableros de trabajo, que no se limitan por mes. */
 const BOARD_CAP = 500;
-
-function mergeById<T extends { id: string }>(...groups: T[][]): T[] {
-  const seen = new Set<string>();
-  return groups.flat().filter((o) => !seen.has(o.id) && seen.add(o.id));
-}
-
-/**
- * Producción: todo pedido pagado en construcción sin importar el mes (uno
- * pagado el 30 no desaparece el 1) más los pagados del mes en curso en
- * cualquier fase, como ya mostraba el tablero.
- */
-export async function getProductionOrders(): Promise<OrderTableRow[]> {
-  const [open, month] = await Promise.all([
-    listOrderRows({ period: null, limit: BOARD_CAP, spec: estadoSpec("en_construccion") }),
-    listOrderRows({ period: currentMonthPeriodBogota(), limit: 50, spec: { status: "pagado" } }),
-  ]);
-  return hydrateOrders(mergeById(open, month));
-}
 
 /** Despachos: pagados `preparado` (listos) y `en_despacho`, sin límite de mes. */
 export async function getDispatchOrders(): Promise<{
