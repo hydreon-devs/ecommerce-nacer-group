@@ -77,6 +77,37 @@ describe("buildLostCard", () => {
     assert.equal(card.resolution, null);
   });
 
+  it("falls back to the order address when the form left the exact address empty", () => {
+    const base = makeOrder();
+    const card = buildLostCard(
+      makeOrder({
+        delivery_address: "Cra. 9a #10E-68, Girardota, Antioquia, Colombia",
+        saleDetails: {
+          ...base.saleDetails!,
+          delivery_address_exact: null,
+          delivery_unit: null,
+          building_name: "Torre Sol",
+        },
+      }),
+      NOW,
+    );
+    assert.equal(card.address, "Cra. 9a #10E-68, Girardota, Antioquia, Colombia, Torre Sol");
+  });
+
+  it("shows only neighborhood and city when there is no street address, and a dash when nothing", () => {
+    const base = makeOrder();
+    const sale = { ...base.saleDetails!, delivery_address_exact: null, delivery_unit: null };
+    assert.equal(
+      buildLostCard(makeOrder({ saleDetails: { ...sale, neighborhood: "Santa Ana", city: "Girardota" } }), NOW)
+        .address,
+      "Santa Ana, Girardota",
+    );
+    assert.equal(
+      buildLostCard(makeOrder({ saleDetails: { ...sale, neighborhood: null, city: null } }), NOW).address,
+      DASH,
+    );
+  });
+
   it("falls back when reason and date are missing", () => {
     const card = buildLostCard(makeOrder({ lost_reason: null, lost_at: null }), NOW);
     assert.equal(card.reason, "Sin motivo registrado");

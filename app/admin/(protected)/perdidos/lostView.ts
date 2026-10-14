@@ -1,5 +1,6 @@
 import type { LostOrderRow } from "@/lib/data/orders";
 import { formatCop } from "../../../../lib/format.ts";
+import { formatDeliveryAddress } from "../../../../lib/domain/deliveryAddress.ts";
 import { isPanelChat } from "../../../../lib/domain/panelSale.ts";
 import {
   RESOLUTION_LABELS,
@@ -42,9 +43,6 @@ function resolutionLabel(value: string): string {
 export function buildLostCard(order: LostOrderRow, now: Date): LostCard {
   // Una fila de sale_details sin `submitted_at` es un borrador: no se muestra de ella el destinatario.
   const sale = order.saleDetails?.submitted_at ? order.saleDetails : null;
-  const addressParts = [sale?.delivery_address_exact, sale?.delivery_unit, sale?.neighborhood, sale?.city]
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part));
 
   const days = daysSinceLoss(order.lost_at, now);
   const lostOn =
@@ -65,7 +63,7 @@ export function buildLostCard(order: LostOrderRow, now: Date): LostCard {
     buyerPhone: isPanelChat(order.chat_id) ? text(order.saleDetails?.buyer_phone) : text(order.chat_id),
     recipient: text(sale?.recipient_name),
     recipientPhone: text(sale?.recipient_phone),
-    address: addressParts.length > 0 ? addressParts.join(", ") : DASH,
+    address: formatDeliveryAddress(order.delivery_address, order.saleDetails, DASH),
     resolution: order.lost_resolution
       ? {
           label: resolutionLabel(order.lost_resolution),

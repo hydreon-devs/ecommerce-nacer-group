@@ -116,6 +116,8 @@ export interface OrderTableRow extends OrderListItem {
   payment_source: string | null;
   occasion: string | null;
   desired_delivery_date: string | null;
+  /** Dirección que dio el cliente al asistente; respaldo cuando el formulario no trae la exacta. */
+  delivery_address?: string | null;
   productSummary: string;
   /** Una entrada por línea de reserva, sin precios; la llena `hydrateOrders`. */
   lines?: OrderTableLine[];
@@ -196,7 +198,7 @@ interface OrderLineJoinRow {
 }
 
 const ORDER_COLUMNS =
-  "id, human_number, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, delivery_distance_km, delivery_fee, payment_source, occasion, desired_delivery_date, advisor_name, supplier_name, created_at, confirmed_at";
+  "id, human_number, chat_id, status, payment_status, fulfillment_status, grand_total, delivery_method, delivery_distance_km, delivery_fee, payment_source, occasion, desired_delivery_date, delivery_address, advisor_name, supplier_name, created_at, confirmed_at";
 
 /** Fila de `orders` tal como sale de `ORDER_COLUMNS`, antes de sumarle líneas y `sale_details`. */
 type OrderRow = Omit<OrderTableRow, "productSummary" | "totalQty" | "productCost" | "saleDetails">;

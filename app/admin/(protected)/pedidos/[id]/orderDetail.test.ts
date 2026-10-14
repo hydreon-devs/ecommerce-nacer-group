@@ -271,6 +271,26 @@ describe("address lines", () => {
     ]);
   });
 
+  it("uses the order address first when the submitted form has no exact address", () => {
+    const view = buildOrderDetailView(
+      makeOrder({
+        delivery_address: "Cra. 9a #10E-68, Girardota, Antioquia, Colombia",
+        saleDetails: makeSale({ delivery_address_exact: "  ", building_name: null, delivery_unit: null }),
+      }),
+    );
+    assert.deepEqual(view.delivery.addressLines, [
+      { label: "Dirección", value: "Cra. 9a #10E-68, Girardota, Antioquia, Colombia" },
+      { label: "Barrio", value: "Laureles" },
+      { label: "Ciudad", value: "Medellín" },
+    ]);
+  });
+
+  it("does not add the order address when the form has an exact address", () => {
+    const lines = buildOrderDetailView(makeOrder()).delivery.addressLines;
+    assert.equal(lines.filter((l) => l.label === "Dirección").length, 1);
+    assert.equal(lines[0].value, "Calle 1 # 2-3");
+  });
+
   it("includes unit and building when present", () => {
     const labels = buildOrderDetailView(makeOrder()).delivery.addressLines.map((l) => l.label);
     assert.deepEqual(labels, ["Dirección", "Unidad / Apto", "Edificio", "Barrio", "Ciudad"]);

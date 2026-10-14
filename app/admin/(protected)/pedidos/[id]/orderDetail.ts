@@ -149,9 +149,13 @@ export function buildOrderDetailView(order: OrderDetail): OrderDetailView {
       if (value !== null) addressLines.push({ label, value });
     }
   }
+  // Sin formulario, o con formulario sin dirección exacta, vale la que dio el asistente.
   const fallbackAddress = present(order.delivery_address);
-  if (!submitted && fallbackAddress !== null) {
-    addressLines.push({ label: "Dirección", value: fallbackAddress });
+  if (fallbackAddress !== null) {
+    if (!submitted) addressLines.push({ label: "Dirección", value: fallbackAddress });
+    else if (present(sale?.delivery_address_exact) === null) {
+      addressLines.unshift({ label: "Dirección", value: fallbackAddress });
+    }
   }
 
   const recipient: DetailField[] = [];

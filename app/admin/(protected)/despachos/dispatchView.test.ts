@@ -82,6 +82,49 @@ describe("buildDispatchCard", () => {
     assert.deepEqual(card.dateBadge, { text: "Sin fecha", tone: "none" });
   });
 
+  it("falls back to the order address when the form left the exact address empty", () => {
+    const base = makeOrder();
+    const card = buildDispatchCard(
+      makeOrder({
+        delivery_address: "Cra. 9a #10E-68, Girardota, Antioquia, Colombia",
+        saleDetails: {
+          ...base.saleDetails!,
+          delivery_address_exact: null,
+          delivery_unit: "Apto 2",
+          building_name: "Torre Sol",
+        },
+      }),
+      TODAY,
+    );
+    assert.equal(card.address, "Cra. 9a #10E-68, Girardota, Antioquia, Colombia, Apto 2, Torre Sol");
+  });
+
+  it("shows only neighborhood and city when there is no street address anywhere", () => {
+    const base = makeOrder();
+    const card = buildDispatchCard(
+      makeOrder({
+        saleDetails: {
+          ...base.saleDetails!,
+          delivery_address_exact: null,
+          delivery_unit: null,
+          neighborhood: "Santa Ana",
+          city: "Girardota",
+        },
+      }),
+      TODAY,
+    );
+    assert.equal(card.address, "Santa Ana, Girardota");
+  });
+
+  it("adds the building to the exact address", () => {
+    const base = makeOrder();
+    const card = buildDispatchCard(
+      makeOrder({ saleDetails: { ...base.saleDetails!, building_name: "Torre Sol" } }),
+      TODAY,
+    );
+    assert.equal(card.address, "Cra 5 # 6-7, Apto 301, Torre Sol, Laureles, Medellín");
+  });
+
   it("ignores a draft sale_details row without submitted_at", () => {
     const base = makeOrder();
     const card = buildDispatchCard(

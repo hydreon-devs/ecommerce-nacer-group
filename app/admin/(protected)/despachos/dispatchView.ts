@@ -1,5 +1,6 @@
 import type { OrderTableRow } from "@/lib/data/orders";
 import { canMarkLost, classifyDelivery } from "../../../../lib/domain/dispatch.ts";
+import { formatDeliveryAddress } from "../../../../lib/domain/deliveryAddress.ts";
 import { nextStep, type NextStep } from "../../../../lib/domain/fulfillmentFlow.ts";
 import { DASH, formatDate, text } from "../pedidos/orderView.ts";
 
@@ -59,14 +60,6 @@ function present(value: string | null | undefined): string | null {
 export function buildDispatchCard(order: OrderTableRow, today: string): DispatchCard {
   // Una fila de sale_details sin `submitted_at` es un borrador: no se muestra nada de ella.
   const sale = order.saleDetails?.submitted_at ? order.saleDetails : null;
-  const addressParts = [
-    sale?.delivery_address_exact,
-    sale?.delivery_unit,
-    sale?.neighborhood,
-    sale?.city,
-  ]
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part));
 
   const cardFrom = present(sale?.card_from);
   const cardTo = present(sale?.card_to);
@@ -90,7 +83,7 @@ export function buildDispatchCard(order: OrderTableRow, today: string): Dispatch
     specialNote: present(sale?.special_notes),
     recipient: text(sale?.recipient_name),
     recipientPhone: text(sale?.recipient_phone),
-    address: addressParts.length > 0 ? addressParts.join(", ") : DASH,
+    address: formatDeliveryAddress(order.delivery_address, order.saleDetails, DASH),
     step: nextStep(order),
     canMarkLost: canMarkLost(order),
   };
