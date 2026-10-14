@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getProducts } from "@/lib/data/admin-products";
 import { formatCop } from "@/lib/format";
+import { InventoryTabs } from "./InventoryTabs";
 import { ProductThumbnail } from "./ProductThumbnail";
 
 export const metadata: Metadata = { title: "Productos — Panel Nacer Group" };
@@ -42,6 +43,7 @@ export default async function ProductosPage({
 
   return (
     <div className="animate-view-in flex flex-col gap-6">
+      <InventoryTabs active="productos" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-admin-ink">Productos</h1>

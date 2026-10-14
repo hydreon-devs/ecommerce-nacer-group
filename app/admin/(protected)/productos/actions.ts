@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import { rpcErrorMessage } from "@/lib/domain/stockRecipe";
 import { isProductSkuTaken, isVariantSkuTaken, resolveVariantSku } from "@/lib/domain/sku";
 
 /** Techos de precio de Crisálidas (spec 001 §4.1) — advertencia, no bloqueo
@@ -74,17 +75,20 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
   const attributes =
     input.attributeKey && input.attributeValue ? { [input.attributeKey]: input.attributeValue } : {};
 
-  const { error: variantError } = await supabase.from("product_variants").insert({
-    product_id: product.id,
-    sku: input.variantSku,
-    attributes,
-    stock_qty: input.stockQty,
+  const { data: rpcData, error: rpcError } = await supabase.rpc("create_variant_with_stock", {
+    p_product: product.id,
+    p_sku: input.variantSku,
+    p_attributes: attributes,
+    p_stock_qty: input.stockQty,
   });
+  const rpcResult = rpcData as { ok?: boolean; error?: string; mensaje?: string } | null;
 
-  if (variantError) {
+  if (rpcError || !rpcResult?.ok) {
     // El producto no debe quedar huérfano sin ninguna variante.
     await supabase.from("products").delete().eq("id", product.id);
-    return { error: `No se pudo crear la variante inicial: ${variantError.message}` };
+    return {
+      error: `No se pudo crear la variante inicial: ${rpcErrorMessage(rpcResult?.error, rpcResult?.mensaje ?? rpcError?.message)}`,
+    };
   }
 
   revalidatePath("/admin/productos");
@@ -101,16 +105,6 @@ export async function setProductPublished(productId: string, published: boolean)
     .from("products")
     .update({ is_published: published })
     .eq("id", productId);
-  if (error) throw error;
-  revalidatePath("/admin/productos");
-}
-
-export async function updateVariantStock(variantId: string, stockQty: number) {
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("product_variants")
-    .update({ stock_qty: stockQty })
-    .eq("id", variantId);
   if (error) throw error;
   revalidatePath("/admin/productos");
 }
@@ -154,14 +148,16 @@ export async function createVariant(
     input.attributeKey && input.attributeValue ? { [input.attributeKey]: input.attributeValue } : {};
 
   const supabase = createAdminClient();
-  const { error } = await supabase.from("product_variants").insert({
-    product_id: input.productId,
-    sku,
-    attributes,
-    stock_qty: input.stockQty,
+  const { data, error } = await supabase.rpc("create_variant_with_stock", {
+    p_product: input.productId,
+    p_sku: sku,
+    p_attributes: attributes,
+    p_stock_qty: input.stockQty,
   });
-
-  if (error) return { ok: false, error: error.message };
+  const result = data as { ok?: boolean; error?: string; mensaje?: string } | null;
+  if (error || !result?.ok) {
+    return { ok: false, error: rpcErrorMessage(result?.error, result?.mensaje ?? error?.message) };
+  }
 
   revalidatePath("/admin/productos");
   return { ok: true, sku };
