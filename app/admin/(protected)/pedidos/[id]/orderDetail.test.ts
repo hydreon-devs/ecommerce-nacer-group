@@ -486,3 +486,47 @@ describe("header strip", () => {
     assert.ok(!JSON.stringify(view).includes("Taller Sol"));
   });
 });
+
+describe("lost reason", () => {
+  it("shows the reason when the order is lost and has one", () => {
+    const view = buildOrderDetailView(
+      makeOrder({ fulfillment_status: "perdido", lost_reason: " Cliente ausente " }),
+    );
+    assert.equal(view.lostReason, "Cliente ausente");
+  });
+
+  it("shows nothing without a reason or when the order is not lost", () => {
+    assert.equal(buildOrderDetailView(makeOrder({ fulfillment_status: "perdido" })).lostReason, null);
+    assert.equal(
+      buildOrderDetailView(makeOrder({ fulfillment_status: "perdido", lost_reason: "  " })).lostReason,
+      null,
+    );
+    assert.equal(
+      buildOrderDetailView(makeOrder({ fulfillment_status: "entregado", lost_reason: "x" })).lostReason,
+      null,
+    );
+  });
+});
+
+describe("lost resolution", () => {
+  it("shows what was done, the note and the date for a resolved lost order", () => {
+    const view = buildOrderDetailView(
+      makeOrder({
+        fulfillment_status: "perdido",
+        lost_resolution: "reembolsado",
+        lost_resolution_note: " Devuelto ",
+        lost_resolved_at: "2026-10-12T15:00:00.000Z",
+      }),
+    );
+    assert.deepEqual(view.lostResolution, { label: "Reembolsado", note: "Devuelto", date: "12/10/2026" });
+  });
+
+  it("is null when unresolved or when the order is not lost", () => {
+    assert.equal(buildOrderDetailView(makeOrder({ fulfillment_status: "perdido" })).lostResolution, null);
+    assert.equal(
+      buildOrderDetailView(makeOrder({ fulfillment_status: "entregado", lost_resolution: "repuesto" }))
+        .lostResolution,
+      null,
+    );
+  });
+});

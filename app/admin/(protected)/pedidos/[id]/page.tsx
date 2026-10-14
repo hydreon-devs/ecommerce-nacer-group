@@ -107,6 +107,26 @@ export default async function OrderDetailPage({
         </dl>
       </header>
 
+      {view.lostReason ? (
+        <p className="rounded-lg bg-admin-critical-bg px-3 py-2 text-sm text-admin-critical-fg">
+          <span className="font-semibold">Motivo de la pérdida:</span>{" "}
+          <span className="whitespace-pre-wrap break-words">{view.lostReason}</span>
+        </p>
+      ) : null}
+
+      {view.lostResolution ? (
+        <p className="rounded-lg bg-admin-surface-sunken px-3 py-2 text-sm text-admin-ink-secondary">
+          <span className="font-semibold text-admin-ink">Resolución:</span> {view.lostResolution.label} ·{" "}
+          {view.lostResolution.date}
+          {view.lostResolution.note ? (
+            <>
+              {" "}
+              <span className="whitespace-pre-wrap break-words">{view.lostResolution.note}</span>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       {view.waitingForCustomer ? (
         <p className="rounded-lg bg-admin-warning-bg px-3 py-2 text-sm text-admin-warning-fg">
           El pedido está pagado, pero el cliente todavía no llena el formulario posventa. Faltan

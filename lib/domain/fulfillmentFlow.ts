@@ -1,3 +1,4 @@
+import { isPickup } from "./dispatch.ts";
 import { isFulfillmentStatus, type FulfillmentStatus } from "./fulfillmentStatus.ts";
 
 /**
@@ -27,7 +28,7 @@ export function nextStep(order: FlowInput): NextStep | null {
     case "en_construccion":
       return { label: "Marcar preparado", to: "preparado" };
     case "preparado":
-      return order.delivery_method?.trim().toLowerCase() === "tienda"
+      return isPickup(order)
         ? { label: "Marcar entregado", to: "entregado" }
         : { label: "Enviar a despacho", to: "en_despacho" };
     case "en_despacho":

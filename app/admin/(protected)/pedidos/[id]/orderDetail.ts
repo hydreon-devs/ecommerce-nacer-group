@@ -6,6 +6,7 @@ import {
   deriveOrderState,
   orderDate,
 } from "../../../../../lib/domain/orderState.ts";
+import { RESOLUTION_LABELS, type LostResolution } from "../../../../../lib/domain/lostFollowUp.ts";
 import { isPanelChat } from "../../../../../lib/domain/panelSale.ts";
 import { DASH, formatDate, text } from "../orderView.ts";
 
@@ -44,6 +45,10 @@ export interface OrderDetailView {
   confirmedAt: string;
   /** Fecha del encabezado: confirmación o, si aún no se confirma, creación. */
   dateLine: string;
+  /** Motivo registrado al marcar el pedido como perdido; solo si el estado es perdido. */
+  lostReason: string | null;
+  /** Cómo se resolvió la pérdida; `null` si no es perdido o aún no se resuelve. */
+  lostResolution: { label: string; note: string | null; date: string } | null;
   /** Estado único derivado (reemplaza a los antiguos indicadores Pedido y Cumplimiento). */
   state: StatusIndicator;
   invoiceStatus: StatusIndicator;
@@ -185,6 +190,15 @@ export function buildOrderDetailView(order: OrderDetail): OrderDetailView {
     dateLine: order.confirmed_at
       ? `Confirmado el ${formatDate(order.confirmed_at)}`
       : `Creado el ${formatDate(orderDate(order))}`,
+    lostReason: state === "perdido" ? present(order.lost_reason)?.trim() ?? null : null,
+    lostResolution:
+      state === "perdido" && present(order.lost_resolution)
+        ? {
+            label: RESOLUTION_LABELS[order.lost_resolution as LostResolution] ?? order.lost_resolution,
+            note: present(order.lost_resolution_note)?.trim() ?? null,
+            date: formatDate(order.lost_resolved_at),
+          }
+        : null,
     state: {
       label: "Estado",
       value: ORDER_STATE_LABELS[state],
