@@ -4,7 +4,7 @@
  * `fulfillment_status` (fase de producción post-pago, ver
  * `fulfillmentStatus.ts`). No se mezclan: un pedido pagado no tiene
  * `orders.status` propio que mostrar aquí porque ya vive en `/admin/pedidos`
- * con su propia fase; esta paleta es para la vista de carritos incompletos.
+ * con su propia fase; esta paleta es para los pedidos que no llegaron a pagarse.
  */
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   abierto: "Abierto",

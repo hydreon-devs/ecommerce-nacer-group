@@ -7,10 +7,7 @@ import {
   parsePeriodParams,
   periodForMonth,
   periodLabel,
-  periodQuery,
   periodRange,
-  resolvePeriodSelection,
-  samePeriod,
   trendGranularity,
   type PeriodSelection,
 } from "./period.ts";
@@ -171,82 +168,5 @@ describe("bucketTrend", () => {
 describe("bogotaDay", () => {
   it("returns the Bogotá calendar day, not the UTC day", () => {
     assert.equal(bogotaDay("2026-11-01T03:00:00Z"), "2026-10-31");
-  });
-});
-
-describe("resolvePeriodSelection", () => {
-  const now = new Date("2026-10-13T15:00:00Z");
-  const month: PeriodSelection = { kind: "month", year: 2026, month: 10 };
-
-  it("keeps all periods as the default default, exactly like parsePeriodParams", () => {
-    for (const raw of [{}, { anio: "abc" }, { mes: "3" }, { anio: "2026" }, { anio: "2026", mes: "3" }, { anio: "2026", mes: "11" }]) {
-      assert.deepEqual(resolvePeriodSelection(raw, now), parsePeriodParams(raw, now));
-    }
-  });
-
-  it("uses the page default on a bare URL", () => {
-    assert.deepEqual(resolvePeriodSelection({}, now, month), month);
-  });
-
-  it("falls back to the page default, not to all, on malformed or impossible values", () => {
-    for (const raw of [{ anio: "abc" }, { mes: "3" }, { anio: "2026", mes: "13" }, { anio: "2026", mes: "11" }, { anio: "1999" }]) {
-      assert.deepEqual(resolvePeriodSelection(raw, now, month), month);
-    }
-  });
-
-  it("reaches all periods explicitly with ?periodo=todos", () => {
-    assert.deepEqual(resolvePeriodSelection({ periodo: "todos" }, now, month), { kind: "all" });
-    assert.deepEqual(resolvePeriodSelection({ periodo: ["todos"] }, now, month), { kind: "all" });
-  });
-
-  it("still honours valid year and month values", () => {
-    assert.deepEqual(resolvePeriodSelection({ anio: "2025" }, now, month), { kind: "year", year: 2025 });
-    assert.deepEqual(resolvePeriodSelection({ anio: "2026", mes: "3" }, now, month), {
-      kind: "month",
-      year: 2026,
-      month: 3,
-    });
-  });
-});
-
-describe("periodQuery", () => {
-  const month: PeriodSelection = { kind: "month", year: 2026, month: 10 };
-
-  it("with the default default (all) matches the legacy URLs", () => {
-    assert.equal(periodQuery({ kind: "all" }), "");
-    assert.equal(periodQuery({ kind: "year", year: 2026 }), "?anio=2026");
-    assert.equal(periodQuery({ kind: "month", year: 2026, month: 3 }), "?mes=3&anio=2026");
-  });
-
-  it("is the bare URL for the page default and explicit for everything else", () => {
-    assert.equal(periodQuery(month, month), "");
-    assert.equal(periodQuery({ kind: "all" }, month), "?periodo=todos");
-    assert.equal(periodQuery({ kind: "year", year: 2026 }, month), "?anio=2026");
-  });
-
-  it("round-trips through resolvePeriodSelection", () => {
-    const now = new Date("2026-10-13T15:00:00Z");
-    const selections: PeriodSelection[] = [
-      { kind: "all" },
-      { kind: "year", year: 2025 },
-      { kind: "month", year: 2026, month: 3 },
-      month,
-    ];
-    for (const s of selections) {
-      const params: Record<string, string> = Object.fromEntries(new URLSearchParams(periodQuery(s, month)));
-      assert.deepEqual(resolvePeriodSelection(params, now, month), s);
-    }
-  });
-});
-
-describe("samePeriod", () => {
-  it("compares selections by value", () => {
-    assert.equal(samePeriod({ kind: "all" }, { kind: "all" }), true);
-    assert.equal(samePeriod({ kind: "year", year: 2026 }, { kind: "year", year: 2026 }), true);
-    assert.equal(samePeriod({ kind: "year", year: 2026 }, { kind: "month", year: 2026, month: 1 }), false);
-    assert.equal(
-      samePeriod({ kind: "month", year: 2026, month: 1 }, { kind: "month", year: 2026, month: 2 }),
-      false,
-    );
   });
 });

@@ -107,50 +107,6 @@ export function parsePeriodParams(
   return { kind: "month", year, month };
 }
 
-const ALL: PeriodSelection = { kind: "all" };
-
-export function samePeriod(a: PeriodSelection, b: PeriodSelection): boolean {
-  if (a.kind !== b.kind) return false;
-  if (a.kind === "all" || b.kind === "all") return true;
-  if (a.year !== b.year) return false;
-  return a.kind === "month" && b.kind === "month" ? a.month === b.month : true;
-}
-
-/**
- * Como `parsePeriodParams`, pero con un periodo por defecto de la pantalla:
- * sin parámetros, o con valores mal formados o imposibles, devuelve `fallback`
- * (no "todo el tiempo"). `?periodo=todos` es la forma explícita de pedir todo
- * el tiempo. Con `fallback` = todo (el valor por omisión) se comporta igual
- * que `parsePeriodParams`.
- */
-export function resolvePeriodSelection(
-  raw: { mes?: string | string[]; anio?: string | string[]; periodo?: string | string[] },
-  now: Date,
-  fallback: PeriodSelection = ALL,
-): PeriodSelection {
-  if (firstValue(raw.periodo) === "todos") return ALL;
-  const parsed = parsePeriodParams(raw, now);
-  return parsed.kind === "all" ? fallback : parsed;
-}
-
-/**
- * Query de la URL para una selección (`""` = URL sin parámetros). La selección
- * por defecto de la pantalla es la URL limpia; "todo el tiempo" solo se
- * escribe explícitamente (`?periodo=todos`) cuando el valor por defecto no es
- * todo. Inversa de `resolvePeriodSelection`.
- */
-export function periodQuery(selection: PeriodSelection, fallback: PeriodSelection = ALL): string {
-  if (samePeriod(selection, fallback)) return "";
-  switch (selection.kind) {
-    case "all":
-      return "?periodo=todos";
-    case "year":
-      return `?anio=${selection.year}`;
-    case "month":
-      return `?mes=${selection.month}&anio=${selection.year}`;
-  }
-}
-
 /** "Todos los periodos", "2026" u "Octubre de 2026". */
 export function periodLabel(selection: PeriodSelection): string {
   switch (selection.kind) {

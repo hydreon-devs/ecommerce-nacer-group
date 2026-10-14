@@ -47,7 +47,6 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
         <nav aria-label="Secciones del panel" className="flex gap-0.5">
           <NavLink href="/admin/estadisticas">Estadísticas</NavLink>
           <NavLink href="/admin/pedidos">Pedidos</NavLink>
-          <NavLink href="/admin/carritos">Carritos</NavLink>
           <NavLink href="/admin/produccion">Producción</NavLink>
           <NavLink href="/admin/despachos">Despachos</NavLink>
           <NavLink href="/admin/productos">Productos</NavLink>

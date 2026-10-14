@@ -3,13 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { withParam } from "@/lib/domain/orderSearch";
-import {
-  MONTH_NAMES,
-  periodQuery,
-  samePeriod,
-  type PeriodSelection,
-  type YearMonth,
-} from "@/lib/domain/period";
+import { MONTH_NAMES, type PeriodSelection, type YearMonth } from "@/lib/domain/period";
 
 const LABEL = "text-xs text-admin-ink-muted";
 const SELECT =
@@ -28,11 +22,17 @@ interface PeriodFilterProps {
   search?: string | null;
   /** Estado activo (solo Pedidos): se conserva igual que la búsqueda y "Limpiar filtros" lo quita. */
   estado?: string | null;
-  /**
-   * Periodo al que la pantalla abre con la URL limpia. "Limpiar filtros" vuelve
-   * a él y se deshabilita cuando ya es la selección. Por omisión, todo el tiempo.
-   */
-  defaultSelection?: PeriodSelection;
+}
+
+function toUrl(pathname: string, selection: PeriodSelection): string {
+  switch (selection.kind) {
+    case "all":
+      return pathname;
+    case "year":
+      return `${pathname}?anio=${selection.year}`;
+    case "month":
+      return `${pathname}?mes=${selection.month}&anio=${selection.year}`;
+  }
 }
 
 /**
@@ -43,14 +43,7 @@ interface PeriodFilterProps {
  * el servidor responde. "Limpiar filtros" siempre ocupa su sitio y se
  * deshabilita sin filtro activo, para que los selects no se desplacen.
  */
-export function PeriodFilter({
-  selected,
-  current,
-  minYear,
-  search,
-  estado,
-  defaultSelection = { kind: "all" },
-}: PeriodFilterProps) {
+export function PeriodFilter({ selected, current, minYear, search, estado }: PeriodFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -65,7 +58,7 @@ export function PeriodFilter({
   const lastMonth = year === current.year ? current.month : 12;
 
   function go(next: PeriodSelection, keepSearch = true) {
-    let url = `${pathname}${periodQuery(next, defaultSelection)}`;
+    let url = toUrl(pathname, next);
     if (keepSearch && search) url = withParam(url, "q", search);
     if (keepSearch && estado) url = withParam(url, "estado", estado);
     startTransition(() => {
@@ -144,8 +137,8 @@ export function PeriodFilter({
       </div>
       <button
         type="button"
-        onClick={() => go(defaultSelection, false)}
-        disabled={samePeriod(value, defaultSelection) && !search && !estado}
+        onClick={() => go({ kind: "all" }, false)}
+        disabled={value.kind === "all" && !search && !estado}
         className="rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent disabled:opacity-60"
       >
         Limpiar filtros

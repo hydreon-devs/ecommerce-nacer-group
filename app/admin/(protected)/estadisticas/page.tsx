@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getPaymentMethods, getSalesSummary, getSalesTrend, getTopProducts } from "@/lib/data/dashboard";
-import { getFunnelCounts } from "@/lib/data/carts";
 import { getEarliestOrderYear, getOrderCounts } from "@/lib/data/orders";
 import {
   bogotaYearMonth,
@@ -26,16 +25,14 @@ export default async function EstadisticasPage({
   const selected = parsePeriodParams(await searchParams, now);
   const period = periodRange(selected);
   const granularity = trendGranularity(selected);
-  const [summary, trend, topProducts, paymentMethods, counts, funnel, earliestYear] =
-    await Promise.all([
-      getSalesSummary(period),
-      getSalesTrend(period, granularity),
-      getTopProducts(period),
-      getPaymentMethods(period),
-      getOrderCounts(period),
-      getFunnelCounts(period),
-      getEarliestOrderYear(),
-    ]);
+  const [summary, trend, topProducts, paymentMethods, counts, earliestYear] = await Promise.all([
+    getSalesSummary(period),
+    getSalesTrend(period, granularity),
+    getTopProducts(period),
+    getPaymentMethods(period),
+    getOrderCounts(period),
+    getEarliestOrderYear(),
+  ]);
 
   return (
     <div className="animate-view-in flex flex-col gap-6">
@@ -54,7 +51,7 @@ export default async function EstadisticasPage({
         </div>
       </div>
 
-      <KpiTiles summary={summary} counts={counts} openCarts={funnel.abierto} />
+      <KpiTiles summary={summary} counts={counts} />
 
       {/* DOM: tendencia, productos, pagos (orden de lectura y de móvil). En lg la tendencia
           ocupa 2/3 a la derecha y abarca las dos filas de la columna izquierda. */}
