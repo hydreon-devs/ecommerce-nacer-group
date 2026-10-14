@@ -1,26 +1,19 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin-client";
+import {
+  assembleCartColumns,
+  type CartColumns,
+  type CartReservation,
+  type CartRow,
+} from "@/lib/domain/cartColumn";
 import type { PeriodRange } from "./orders";
 
-export interface IncompleteOrder {
-  id: string;
-  human_number: string;
-  chat_id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  grand_total: number;
-  delivery_method: string | null;
-  productSummary: string;
-  /**
-   * `true` cuando el pedido sigue en `abierto` pero ninguna de sus reservas
-   * sigue vigente (todas vencidas, liberadas o inexistentes). `expire_reservations()`
-   * no tiene planificador en la base (rpc-contract.md §7 del repositorio del
-   * agente) — nada la ejecuta sola, así que un carrito puede quedar marcado
-   * `abierto` indefinidamente aunque ya esté funcionalmente muerto. Esto lo
-   * hace visible al equipo en vez de dejarlo silencioso.
-   */
-  reservationsAllExpired: boolean;
+export type { CartColumns, CartRow };
+
+export interface CartResult {
+  columns: CartColumns;
+  /** Una de las consultas llegó al tope: los conteos pueden quedar cortos. */
+  truncated: boolean;
 }
 
 export interface FunnelCounts {
@@ -30,64 +23,73 @@ export interface FunnelCounts {
   cancelado: number;
 }
 
-interface ReservationRow {
-  order_id: string;
-  qty: number;
-  status: string;
-  expires_at: string;
-  product_variants: { products: { name: string } | null } | null;
-}
+/**
+ * Tope de filas por consulta. PostgREST corta en silencio al llegar a su
+ * máximo de filas por petición; los abiertos no se limitan por periodo, así
+ * que este tope (el mismo criterio de `BOARD_CAP` en `orders.ts`) es lo único
+ * que los acota.
+ */
+export const CART_CAP = 500;
+
+/** `.in("order_id", …)` va en la URL: se consulta por tandas para no exceder su largo. */
+const RESERVATION_CHUNK = 100;
+
+const ORDER_COLUMNS = "id, human_number, status, payment_status, fulfillment_status, created_at, updated_at";
 
 /**
- * Pedidos que no llegaron a `pagado` — carritos abiertos (intentos de
- * compra en curso), vencidos o cancelados. A diferencia de `getOrders`
- * (spec 002/003, filtra por `confirmed_at`), aquí se filtra por
- * `created_at`: estos pedidos nunca tuvieron `confirmed_at`, así que no hay
- * otra fecha por la cual anclarlos al periodo.
+ * Pedidos que no llegaron a `pagado`, ya clasificados en las tres columnas
+ * del panel (`classifyCart`). Una sola clasificación alimenta lista y
+ * contador, así que no pueden discrepar.
+ *
+ * Abiertos no se limita por periodo: es lo vigente ahora. Vencidos y
+ * Cancelados sí, y por `created_at` — a diferencia de `getOrders` (filtra por
+ * `confirmed_at`), estos pedidos nunca tuvieron `confirmed_at`, así que no hay
+ * otra fecha por la cual anclarlos al periodo. Un `abierto` sin reserva
+ * vigente es una fila de Vencidos y por tanto sigue el periodo.
+ *
+ * La vigencia se calcula aquí con la hora actual; no depende de que
+ * `expire_reservations()` (flujo de n8n cada 8 horas, cuando está activo) ya
+ * haya movido el pedido a `vencido`. `period` null = sin límite de fechas.
+ * `truncated` avisa cuando una consulta llegó a `CART_CAP`.
  */
-export async function getIncompleteOrders(period: PeriodRange): Promise<IncompleteOrder[]> {
+export async function getCartColumns(period: PeriodRange | null, now = new Date()): Promise<CartResult> {
   const supabase = createAdminClient();
 
-  const { data: orders, error: ordersError } = await supabase
+  const inPeriod = supabase
     .from("orders")
-    .select("id, human_number, chat_id, status, created_at, updated_at, grand_total, delivery_method")
-    .neq("status", "pagado")
-    .gte("created_at", period.desde)
-    .lt("created_at", period.hasta)
-    .order("created_at", { ascending: false });
+    .select(ORDER_COLUMNS)
+    .in("status", ["abierto", "vencido", "cancelado"])
+    .order("updated_at", { ascending: false })
+    .limit(CART_CAP);
+  const [openResult, periodResult] = await Promise.all([
+    supabase
+      .from("orders")
+      .select(ORDER_COLUMNS)
+      .eq("status", "abierto")
+      .order("updated_at", { ascending: false })
+      .limit(CART_CAP),
+    period ? inPeriod.gte("created_at", period.desde).lt("created_at", period.hasta) : inPeriod,
+  ]);
+  if (openResult.error) throw openResult.error;
+  if (periodResult.error) throw periodResult.error;
 
-  if (ordersError) throw ordersError;
-  if (!orders || orders.length === 0) return [];
+  const orders = [...(openResult.data ?? []), ...(periodResult.data ?? [])];
+  const truncated =
+    (openResult.data?.length ?? 0) >= CART_CAP || (periodResult.data?.length ?? 0) >= CART_CAP;
 
-  const orderIds = orders.map((o) => o.id);
-  const { data: reservationRows, error: reservationsError } = await supabase
-    .from("reservations")
-    .select("order_id, qty, status, expires_at, product_variants(products(name))")
-    .in("order_id", orderIds);
-
-  if (reservationsError) throw reservationsError;
-
-  const byOrder = new Map<string, { names: string[]; hasLiveReservation: boolean }>();
-  const now = Date.now();
-
-  for (const row of (reservationRows ?? []) as unknown as ReservationRow[]) {
-    const entry = byOrder.get(row.order_id) ?? { names: [], hasLiveReservation: false };
-    const name = row.product_variants?.products?.name;
-    if (name) entry.names.push(`${name} ×${row.qty}`);
-    if (row.status === "activa" && new Date(row.expires_at).getTime() > now) {
-      entry.hasLiveReservation = true;
-    }
-    byOrder.set(row.order_id, entry);
+  // Solo los `abierto` necesitan sus reservas; vencido y cancelado se clasifican por `status`.
+  const openIds = [...new Set(orders.filter((o) => o.status === "abierto").map((o) => o.id))];
+  const reservations: (CartReservation & { order_id: string })[] = [];
+  for (let i = 0; i < openIds.length; i += RESERVATION_CHUNK) {
+    const { data, error } = await supabase
+      .from("reservations")
+      .select("order_id, status, expires_at")
+      .in("order_id", openIds.slice(i, i + RESERVATION_CHUNK));
+    if (error) throw error;
+    reservations.push(...(data ?? []));
   }
 
-  return orders.map((order) => {
-    const summary = byOrder.get(order.id);
-    return {
-      ...order,
-      productSummary: summary?.names.join(", ") || "—",
-      reservationsAllExpired: order.status === "abierto" && !summary?.hasLiveReservation,
-    };
-  });
+  return { columns: assembleCartColumns({ orders, reservations, period, now }), truncated };
 }
 
 /**
