@@ -30,7 +30,7 @@ import {
 } from "../../ui/formClasses";
 import { adjustStockItem, saveOptionRecipe, saveVariantRecipe } from "../insumos/actions";
 
-const CARD_CLASS = "rounded-xl border border-admin-border bg-admin-surface-raised";
+const CARD_CLASS = "rounded-xl border border-transparent bg-admin-surface-raised shadow-admin-card";
 const PUBLISH_ERROR = "No se pudo cambiar la publicación. Inténtalo de nuevo.";
 const VARIANT_ACTIVE_ERROR = "No se pudo cambiar el estado de la variante. Inténtalo de nuevo.";
 

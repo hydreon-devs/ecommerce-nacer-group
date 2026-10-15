@@ -113,7 +113,7 @@ export function StockItemControls({ item }: Props) {
   const current = confirming ? dialog[confirming] : null;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface-raised p-4">
+    <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card">
       <dl className="grid grid-cols-3 gap-4 text-center">
         {[
           ["Stock", item.stockQty],

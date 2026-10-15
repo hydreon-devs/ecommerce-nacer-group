@@ -30,7 +30,7 @@ export function chipClass(active: boolean): string {
 
 /** Grupo de campos de un formulario largo (tarjeta con sombra mínima). */
 export const fieldsetClass =
-  "flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04)]";
+  "flex flex-col gap-4 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card";
 
 /** Base de los botones compactos de diálogos (sin color: se le suma el tono). */
 export const dialogButtonClass =

@@ -22,7 +22,7 @@ export function StockItemForm({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface-raised p-4"
+      className="flex flex-col gap-4 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card"
     >
       {/* El SKU solo se pide al crear; al editar viaja oculto sin cambios. */}
       {item ? (

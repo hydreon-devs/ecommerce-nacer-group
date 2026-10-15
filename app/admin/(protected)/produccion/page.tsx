@@ -29,7 +29,7 @@ function ProductionSection({
         {rows.map((row) => (
           <div
             key={row.id}
-            className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel"
+            className="flex flex-col gap-3 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="font-admin-mono text-sm font-semibold text-admin-ink">N° de pedido: {row.humanNumber}</span>

@@ -76,7 +76,7 @@ export default async function PedidosPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface-raised shadow-admin-panel">
+      <div className="overflow-hidden rounded-xl border border-transparent bg-admin-surface-raised shadow-admin-card">
         {views.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
             <p className="text-sm text-admin-ink-muted">

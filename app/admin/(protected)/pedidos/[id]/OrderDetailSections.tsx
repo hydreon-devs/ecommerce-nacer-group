@@ -8,7 +8,7 @@ import type { DetailField, OrderDetailView } from "./orderDetail";
  */
 
 const CARD_CLASS =
-  "rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel";
+  "rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card";
 
 const LINK_CLASS =
   "break-words text-admin-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";

@@ -110,9 +110,9 @@
   --color-admin-series-blue: var(--admin-series-blue);
   --color-admin-series-orange: var(--admin-series-orange);
   --color-admin-series-aqua: var(--admin-series-aqua);
+  /* Única sombra de tarjeta del panel: trae su propio borde de 1 px, así que las
+     tarjetas usan `border-transparent` (se conserva solo para forced-colors). */
   --shadow-admin-card: var(--admin-shadow-card);
-  /* Tarjetas de página con más cuerpo que la de lista (misma sombra que antes, ahora con nombre). */
-  --shadow-admin-panel: 0 1px 2px rgba(11, 17, 32, 0.04), 0 8px 24px -12px rgba(11, 17, 32, 0.12);
   /* Diálogos y superposiciones modales. */
   --shadow-admin-overlay: 0 24px 64px -16px rgba(11, 17, 32, 0.4);
   --font-admin-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;

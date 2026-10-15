@@ -80,7 +80,7 @@ export default async function InsumoDetailPage({ params }: { params: Promise<{ s
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-admin-ink">Movimientos recientes</h2>
-        <div className="overflow-x-auto rounded-xl border border-admin-border bg-admin-surface-raised">
+        <div className="overflow-x-auto rounded-xl border border-transparent bg-admin-surface-raised shadow-admin-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-admin-border text-xs text-admin-ink-muted">
               <tr>

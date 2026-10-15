@@ -18,7 +18,7 @@ function ProductCard({ product }: { product: ProductListItem }) {
   return (
     <Link
       href={`/admin/productos/${product.sku}`}
-      className={`flex gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-3 shadow-admin-card transition-colors duration-200 hover:border-admin-border-strong ${FOCUS_RING}`}
+      className={`flex gap-3 rounded-xl border border-transparent bg-admin-surface-raised p-3 shadow-admin-card transition-colors duration-200 hover:border-admin-border-strong ${FOCUS_RING}`}
     >
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-admin-surface-sunken">
         <ProductThumbnail url={product.thumbnailUrl} alt={product.name} />

@@ -102,7 +102,7 @@ export default async function InsumosPage({
         </Link>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-admin-border bg-admin-surface-raised">
+      <div className="overflow-x-auto rounded-xl border border-transparent bg-admin-surface-raised shadow-admin-card">
         <table className="w-full min-w-[34rem] text-left text-sm">
           <caption className="sr-only">Insumos con existencias, reservas y disponibilidad</caption>
           <thead className="border-b border-admin-border text-xs text-admin-ink-muted">

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-admin-surface px-6">
-      <div className="w-full max-w-sm rounded-xl border border-admin-border bg-admin-surface-raised p-8 shadow-admin-panel">
+      <div className="w-full max-w-sm rounded-xl border border-transparent bg-admin-surface-raised p-8 shadow-admin-card">
         <svg
           viewBox="0 0 24 24"
           fill="none"
