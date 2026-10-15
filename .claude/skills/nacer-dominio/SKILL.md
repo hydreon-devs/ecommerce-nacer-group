@@ -9,9 +9,23 @@ description: Reglas de negocio invariantes de Nacer Group — disponibilidad vs 
 
 | Marca | Prefijo SKU | Categorías | Vende en el sitio |
 |---|---|---|---|
-| Crisálidas y Mariposas | `CM` | Experiencia · Artesanía · Detalle | Sí |
-| Jagua | `JA` | Artesanía · Papelería · Regalo empresarial | Sí |
-| Florea | `FL` | Colmena · Taller · Kit educativo | **No — enlace externo** |
+| Crisálidas y Mariposas | `CRI-` | Colección por franja de precio (ver tabla) | Sí |
+| Complementos (línea de accesorios de Crisálidas) | `COM-` | Sin categoría (`null`) | Sí |
+| Florea | — (sin productos) | Colmena · Taller · Kit educativo | **No — enlace externo** |
+
+Colecciones de Crisálidas, en orden canónico:
+
+| Colección | Techo de precio |
+|---|---|
+| Pequeños Milagros | 100.000 COP |
+| Instantes de Vida | 200.000 COP |
+| Grandes Transformaciones | 300.000 COP |
+| Experiencias de Colección | 350.000 COP |
+| Mariposas de Liberación | Sin techo |
+
+El techo solo genera una **advertencia** en el panel al guardar; no bloquea
+(`CRISALIDAS_PRICE_CEILING` en `app/admin/(protected)/productos/actions.ts`). Complementos
+hoy tiene 3 productos: Chocolates x 9, PIN Mariposa, Tarjetas 3D.
 
 Florea se modela en la tabla `marcas` con `vende_en_sitio = false` y `url_externa`
 poblada. No se cargan sus productos. La sección de Florea en el sitio es informativa
@@ -25,7 +39,8 @@ WHERE p.activo = true
 ```
 
 Si en el futuro Florea vende, se cambia el booleano y se cargan los productos. Ningún
-esquema ni código debe asumir que solo existen dos marcas.
+esquema ni código debe asumir que el conjunto de marcas o tipos que venden es fijo: hoy
+venden Crisálidas y Complementos, y sumar Florea debe ser cambio de dato, no migración.
 
 Las categorías de Florea — `Colmena`, `Taller`, `Kit educativo` — **se conservan declaradas
 en el enum** aunque hoy no tengan productos. Activarla será carga de datos, no migración.
@@ -108,8 +123,8 @@ libere las vencidas.
 | Modalidad | Aplica a | Requiere |
 |---|---|---|
 | `Medellín y área metropolitana` | Producto físico | Dirección + cálculo de domicilio por zona |
-| `Entrega coordinada` | Regalo empresarial (Jagua) | Contacto posterior, sin tarifa automática |
-| `Fecha coordinada` | Experiencia (Crisálidas) | **Agenda**, no dirección |
+| `Entrega coordinada` | Sin uso actual (se definió para regalo empresarial, que ya no existe) | Contacto posterior, sin tarifa automática |
+| `Fecha coordinada` | Productos de experiencia de Crisálidas (liberación de mariposas) | **Agenda**, no dirección |
 
 `requiere_agenda = true` saca al pedido del flujo de despacho y lo mete en el flujo de
 agenda. El checkout debe pedir fecha, no dirección.
@@ -131,6 +146,10 @@ N:N vía `producto_ocasion`.
 tono de la interfaz y del agente debe sostener ese registro.
 
 ## 7. Esquema
+
+> **Nota (15/10/2026):** el esquema de producción usa nombres en inglés (`products`, `brand`,
+> `category`, `base_price`) y no tiene tabla `marcas`. La conciliación con el esquema descrito
+> aquí está pendiente.
 
 ```
 marcas            id · nombre · slug · logo · color_primario · url_externa ·
@@ -182,7 +201,7 @@ control de acceso.
 Marcar con `TODO(decisión)` en el código, no resolver por cuenta propia:
 
 - Política de reserva para pagos en efectivo.
-- **Si `Experiencia` (Crisálidas) usa `Fecha coordinada`.** El documento maestro solo asignó
+- **Si los productos de experiencia de Crisálidas (liberación de mariposas) usan `Fecha coordinada`.** El documento maestro solo asignó
   esa modalidad a `Taller`, que era de Florea. Mientras no se resuelva, `requiere_agenda` se
   define **por producto** para no cerrar ninguna de las dos opciones, y el checkout soporta
   el camino agendado desde el día uno.

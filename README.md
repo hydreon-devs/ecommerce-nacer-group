@@ -28,12 +28,11 @@
 
 ### Qué se vende
 
-Nacer Group agrupa tres marcas con un hilo conductor común: **naturaleza, transformación y momentos significativos**. El catálogo **no es solo producto físico** — mezcla bienes, experiencias y servicios agendables.
+Nacer Group agrupa dos marcas con un hilo conductor común: **naturaleza, transformación y momentos significativos**. El catálogo **no es solo producto físico** — mezcla bienes, experiencias y servicios agendables.
 
 | Marca | Categorías | Naturaleza | En el sitio (v1) |
 |---|---|---|---|
-| **Crisálidas y Mariposas** | Experiencia, Artesanía, Detalle | Liberación de mariposas (individual y familiar), cerámica artesanal, detalles de acompañamiento | **Vende** |
-| **Jagua** | Artesanía, Papelería, Regalo empresarial | Escultura en papel, tarjetería artesanal, kits corporativos | **Vende** |
+| **Crisálidas y Mariposas** | Colecciones por franja de precio: Pequeños Milagros, Instantes de Vida, Grandes Transformaciones, Experiencias de Colección, Mariposas de Liberación | Liberación de mariposas (individual y familiar), cerámica artesanal, detalles de acompañamiento. Incluye la línea **Complementos** | **Vende** |
 | **Florea** | Colmena, Taller, Kit educativo | Meliponicultura — abejas sin aguijón, talleres, material educativo | **No vende — enlace externo** |
 
 > **Alcance de Florea en la v1 (decisión del cliente, 19/08/2026):** Florea no comercializa
@@ -44,15 +43,22 @@ Nacer Group agrupa tres marcas con un hilo conductor común: **naturaleza, trans
 > Se modela con `marcas.vende_en_sitio = false` y `marcas.url_externa`, y sus categorías se
 > conservan declaradas en el enum. Activarla después será carga de datos, no migración.
 
+**Complementos** es la línea de accesorios de Crisálidas y Mariposas (prefijo SKU `COM-`, sin
+colección). Hoy tiene 3 productos: Chocolates x 9, PIN Mariposa y Tarjetas 3D. Los productos de
+Crisálidas usan el prefijo `CRI-` y se agrupan en colecciones con techo de precio: Pequeños
+Milagros $100.000, Instantes de Vida $200.000, Grandes Transformaciones $300.000, Experiencias de
+Colección $350.000; Mariposas de Liberación no tiene techo. Superar el techo solo genera una
+advertencia en el panel de administración; no bloquea el guardado.
+
 **Rango de precio observado:** $35.000 – $480.000 COP. Ticket medio-alto para el sector artesanal.
 El tope de $480.000 corresponde a la colmena de Florea; **el rango vendible en la v1 llega hasta ≈$240.000** (experiencia familiar de Crisálidas).
 
-**Implicación crítica de diseño:** los ítems tipo *Experiencia* no se despachan — se **agendan**. El modelo de datos y la máquina de estados deben soportar ambos caminos. (*Taller* y *Colmena* eran de Florea y salen de la v1, pero el flujo de agenda sigue siendo necesario por las experiencias de liberación de mariposas de Crisálidas.)
+**Implicación crítica de diseño:** los productos de experiencia (liberación de mariposas) no se despachan — se **agendan**. El modelo de datos y la máquina de estados deben soportar ambos caminos. (*Taller* y *Colmena* eran de Florea y salen de la v1, pero el flujo de agenda sigue siendo necesario por las experiencias de liberación de mariposas de Crisálidas.)
 
 ### Cliente final
 
 - **B2C predominante**: consumidor final, venta principalmente por WhatsApp.
-- **B2B presente y explícito**: la categoría *Regalo empresarial* (Jagua) y la ocasión *empresas* confirman un segmento corporativo.
+- **B2B presente**: la ocasión *empresas* indica un segmento corporativo. La categoría *Regalo empresarial*, que lo reforzaba, ya no existe en el catálogo.
 - Existe un subconjunto que **solicita factura a su nombre** con documento de identificación.
 - Operación: **Colombia**, con base en Medellín.
 
@@ -84,12 +90,12 @@ El catálogo está etiquetado por ocasión, no solo por categoría. Esta es **la
 
 | Campo | Tipo | Uso |
 |---|---|---|
-| `sku` | texto | Identificador. Formato `XX-000` con prefijo por marca (CM, FL, JA) |
+| `sku` | texto | Identificador con prefijo por tipo de producto: `CRI-` (Crisálidas y Mariposas) · `COM-` (Complementos) |
 | `nombre` | texto | Nombre comercial mostrado al cliente |
 | `nombre_busqueda` | texto | Normalizado sin tildes, para coincidencia exacta |
 | `alias_busqueda` | texto | Sinónimos separados por coma, para búsqueda flexible |
-| `marca` | enum | Crisálidas y Mariposas · Florea · Jagua |
-| `categoria` | enum | Experiencia · Artesanía · Detalle · Colmena · Taller · Kit educativo · Papelería · Regalo empresarial |
+| `marca` | enum | Crisálidas y Mariposas · Complementos (línea de Crisálidas) · Florea |
+| `categoria` | enum | Crisálidas: colección — Pequeños Milagros · Instantes de Vida · Grandes Transformaciones · Experiencias de Colección · Mariposas de Liberación. Complementos: nulo. Florea (sin productos): Colmena · Taller · Kit educativo |
 | `ocasiones` | multi-valor | Etiquetas separadas por coma |
 | `descripcion_corta` | texto | Descripción para el agente y la ficha |
 | `precio_cop` | entero | Precio en pesos, sin decimales |
@@ -121,11 +127,11 @@ Un motor de inventario convencional trataría `stock = 0` como no vendible y **b
 | Modalidad | Aplica a | Implicación |
 |---|---|---|
 | Medellín y área metropolitana | Producto físico | Requiere dirección y cálculo de domicilio |
-| Entrega coordinada | Kit / regalo empresarial (Jagua) | Requiere contacto posterior, sin tarifa automática |
+| Entrega coordinada | ⬜ Sin uso actual — se definió para kits y regalo empresarial, que ya no existen en el catálogo | Requiere contacto posterior, sin tarifa automática |
 | Fecha coordinada | ⬜ **Ver decisión abierta** | Requiere **agenda**, no dirección |
 
 > ⬜ **DECISIÓN ABIERTA:** esta modalidad estaba asignada únicamente a *Taller*, que era de
-> Florea. Falta confirmar si las **Experiencias de Crisálidas** la usan. Mientras no se
+> Florea. Falta confirmar si los **productos de experiencia de Crisálidas** (liberación de mariposas) la usan. Mientras no se
 > resuelva, `requiere_agenda` se define **por producto** para no cerrar ninguna de las dos
 > opciones, y el checkout soporta el camino agendado desde el día uno.
 
@@ -171,7 +177,7 @@ Cada método tiene un comportamiento técnico distinto y esto **sí afecta la ar
 | 7 días | 2,99% + $800 + IVA |
 | 14 días | 2,79% + $800 + IVA |
 
-El componente fijo de $800 pesa fuerte en el ticket bajo: sobre la tarjeta artesanal de $35.000 equivale a 2,3 puntos adicionales.
+El componente fijo de $800 pesa fuerte en el ticket bajo: sobre un ticket de $35.000 (extremo bajo del rango observado) equivale a 2,3 puntos adicionales.
 
 ### Reglas de confirmación de pago
 
@@ -289,6 +295,10 @@ Se separan **tres dimensiones independientes**. Un solo campo de estado no alcan
 > `estado_facturacion` se implementa desde el MVP aunque la emisión sea manual. Evita migración de datos cuando entre la fase 2.
 
 ### Entidades principales
+
+> **Nota (15/10/2026):** el esquema de producción usa nombres en inglés (`products`, `brand`,
+> `category`, `base_price`) y no tiene tabla `marcas`. La conciliación con el esquema descrito
+> aquí está pendiente.
 
 ```
 marcas            id · nombre · slug · logo · color_primario · url_externa ·
@@ -426,14 +436,9 @@ Crisálidas y Mariposas
 Florea   (v1: solo sección de enlace externo — no requiere paleta completa)
   Logo:                  ⬜ archivo pendiente
   URL del sitio externo: ⬜ pendiente
-
-Jagua
-  Color primario:        #______
-  Color secundario:      #______
-  Logo:                  ⬜ archivo pendiente
 ```
 
-**Decisión pendiente:** ⬜ definir si **Crisálidas y Jagua** conservan identidad propia dentro del sitio unificado (paleta por sección) o si se unifican bajo una sola identidad de Nacer Group con diferenciación sutil. Florea queda fuera de esta decisión en la v1: solo aporta logo y enlace.
+**Decisión pendiente:** ⬜ definir si **Crisálidas y Mariposas** conserva identidad propia dentro del sitio unificado (paleta de marca) o si se presenta bajo la identidad de Nacer Group con diferenciación sutil. Florea queda fuera de esta decisión en la v1: solo aporta logo y enlace.
 
 ### Referencias visuales
 
@@ -576,7 +581,7 @@ Cobertura de componentes visuales, pruebas de regresión visual, pruebas de carg
 
 ### MVP — v1 (9 a 10 semanas)
 
-- Sitio unificado para las tres marcas
+- Sitio unificado para las marcas de Nacer Group
 - Catálogo en línea con filtro por marca, categoría y **ocasión**
 - Carrito y checkout con Mercado Pago
 - Soporte para las tres modalidades de entrega (domicilio, coordinada, agendada)
@@ -609,7 +614,7 @@ Cobertura de componentes visuales, pruebas de regresión visual, pruebas de carg
 | 1 | Titularidad de la cuenta de Mercado Pago | Cliente | No se puede integrar el cobro |
 | 2 | Verificación de Meta Business | Trámite con Meta | No hay canal de WhatsApp |
 | 3 | Catálogo real completo con imágenes | Cliente | No hay contenido que publicar |
-| 4 | Identidad visual de Crisálidas y Jagua | Cliente | No se puede iniciar el diseño. Florea solo requiere **logo y URL** para la sección de enlace, no paleta completa |
+| 4 | Identidad visual de Crisálidas y Mariposas | Cliente | No se puede iniciar el diseño. Florea solo requiere **logo y URL** para la sección de enlace, no paleta completa |
 | 5 | Credenciales de la API de Aliaddo | Cliente / Aliaddo | Condiciona la fase 2 |
 | 6 | Fecha de renovación anual de Odoo | Cliente | Define el plazo de lanzamiento |
 | 7 | Tabla de zonas y tarifas de envío | Cliente | El agente no puede cotizar domicilio |
@@ -670,3 +675,4 @@ pruebas, conversación con el cliente); `sonnet` en el trabajo de interfaz y de 
 | 1.0 | 19/08/2026 | Extracción inicial del diagnóstico |
 | 2.0 | 19/08/2026 | Incorpora catálogo real, modelo de datos, máquina de estados, modelo de IA, estrategia de testing y zonas de animación |
 | 2.1 | 19/08/2026 | Florea sale del alcance de venta en la v1 (solo enlace externo). Agrega `vende_en_sitio` y `url_externa`, actualiza filtro base, modalidades de entrega, escalamiento por valor y bloqueante 4 |
+| 2.2 | 15/10/2026 | Jagua sale del negocio; sus productos pasan a Complementos. Categorías de Crisálidas reemplazadas por colecciones por franja de precio. Prefijos SKU CRI/COM |
