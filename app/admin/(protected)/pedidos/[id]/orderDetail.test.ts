@@ -104,7 +104,7 @@ describe("status indicators", () => {
     assert.equal(
       buildOrderDetailView(makeOrder({ status: "abierto", payment_status: "comprobante_recibido" })).state
         .value,
-      "Pendiente por aprobar",
+      "Pago por aprobar",
     );
     assert.equal(buildOrderDetailView(makeOrder({ status: "cancelado" })).state.value, "Cancelado");
   });
@@ -491,8 +491,9 @@ describe("header strip", () => {
     for (const stored of ["aprobado", "pendiente", "algo-raro", null, "  "]) {
       const view = buildOrderDetailView(makeOrder({ payment_status: stored, status: "abierto" }));
       assert.ok(!("paymentStatus" in view));
-      assert.equal(view.state.value, "Abierto");
-      const json = JSON.stringify(view);
+      assert.equal(view.state.value, "Pendiente de pago");
+      // La etiqueta del estado se excluye: "Pendiente de pago" es intencional, no una fuga de payment_status.
+      const json = JSON.stringify({ ...view, state: null });
       for (const word of ["Aprobado", "Pendiente", "algo-raro", "Reembolsado", "Rechazado"]) {
         assert.ok(!json.includes(word), `leaked: ${word}`);
       }

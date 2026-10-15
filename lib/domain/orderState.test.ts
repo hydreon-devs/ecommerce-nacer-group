@@ -46,7 +46,9 @@ describe("labels and pills", () => {
       assert.ok(ORDER_STATE_LABELS[state], state);
       assert.ok(ORDER_STATE_PILL_CLASS[state], state);
     }
-    assert.equal(ORDER_STATE_LABELS.pendiente_aprobacion, "Pendiente por aprobar");
+    assert.equal(ORDER_STATE_LABELS.abierto, "Pendiente de pago");
+    assert.equal(ORDER_STATE_LABELS.pendiente_aprobacion, "Pago por aprobar");
+    assert.equal(ORDER_STATE_LABELS.vencido, "Vencido sin pago");
     assert.equal(ORDER_STATE_LABELS.preparado, "Preparado");
     assert.equal(ORDER_STATE_LABELS.en_construccion, "En construcción");
   });

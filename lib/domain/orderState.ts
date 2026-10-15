@@ -57,7 +57,7 @@ export function deriveOrderState(order: OrderStateInput): OrderState {
 export const ORDER_STATE_LABELS: Record<OrderState, string> = {
   ...FULFILLMENT_LABELS,
   abierto: ORDER_STATUS_LABELS.abierto,
-  pendiente_aprobacion: "Pendiente por aprobar",
+  pendiente_aprobacion: "Pago por aprobar",
   cancelado: ORDER_STATUS_LABELS.cancelado,
   vencido: ORDER_STATUS_LABELS.vencido,
 };

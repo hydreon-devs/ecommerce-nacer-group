@@ -7,9 +7,9 @@
  * con su propia fase; esta paleta es para los pedidos que no llegaron a pagarse.
  */
 export const ORDER_STATUS_LABELS: Record<string, string> = {
-  abierto: "Abierto",
+  abierto: "Pendiente de pago",
   pagado: "Pagado",
-  vencido: "Vencido",
+  vencido: "Vencido sin pago",
   cancelado: "Cancelado",
 };
 
