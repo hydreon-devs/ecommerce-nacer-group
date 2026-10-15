@@ -12,7 +12,7 @@ import { sortByDesiredDate } from "@/lib/domain/fulfillmentFlow";
 import { bogotaToday } from "@/lib/domain/productionDay";
 import { AdvanceOrderButton } from "../AdvanceOrderButton";
 import { RefreshButton } from "../RefreshButton";
-import { AddressLink, PhoneLink } from "../ui/ContactLinks";
+import { DASH } from "../pedidos/orderView";
 import { LostButton } from "./LostButton";
 import { ReadyFilter } from "./ReadyFilter";
 import { buildDispatchCard, type DateTone, type DispatchCard } from "./dispatchView";
@@ -29,13 +29,14 @@ const DATE_TONE_CLASS: Record<DateTone, string> = {
 
 const READY_EMPTY: Record<DispatchFilter, string> = {
   hoy: "No hay pedidos para despachar hoy.",
+  atrasados: "No hay pedidos listos con la entrega atrasada.",
   proximos: "No hay pedidos listos con fecha posterior a hoy.",
   todos: "No hay pedidos preparados esperando despacho.",
 };
 
 function DispatchCardView({ card, inDispatch }: { card: DispatchCard; inDispatch: boolean }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel">
+    <div className="flex flex-col gap-3 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-admin-mono text-sm font-semibold text-admin-ink">N° de pedido: {card.humanNumber}</span>
         <span className="rounded-full bg-admin-surface-sunken px-2.5 py-0.5 text-xs font-semibold text-admin-ink-secondary">
@@ -85,13 +86,9 @@ function DispatchCardView({ card, inDispatch }: { card: DispatchCard; inDispatch
         <dt className="text-admin-ink-muted">Recibe:</dt>
         <dd>{card.recipient}</dd>
         <dt className="text-admin-ink-muted">Teléfono de quien recibe:</dt>
-        <dd>
-          <PhoneLink phone={card.recipientPhone} who={card.recipient} />
-        </dd>
+        <dd className="font-admin-mono">{card.recipientPhone}</dd>
         <dt className="text-admin-ink-muted">Dirección:</dt>
-        <dd>
-          <AddressLink address={card.address} />
-        </dd>
+        <dd className={`break-words ${card.address === DASH ? "text-admin-ink-muted" : ""}`}>{card.address}</dd>
       </dl>
 
       {card.step ? (

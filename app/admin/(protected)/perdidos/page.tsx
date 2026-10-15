@@ -6,14 +6,14 @@ import { RefreshButton } from "../RefreshButton";
 import { ResolveButton } from "./ResolveButton";
 import { buildLostCard, type LostCard } from "./lostView";
 import { BackLink } from "../ui/BackLink";
-import { AddressLink, PhoneLink } from "../ui/ContactLinks";
+import { DASH } from "../pedidos/orderView";
 
 export const metadata: Metadata = { title: "Pedidos perdidos — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
 
 function LostCardView({ card, pending }: { card: LostCard; pending: boolean }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel">
+    <div className="flex flex-col gap-3 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={card.href}
@@ -51,19 +51,13 @@ function LostCardView({ card, pending }: { card: LostCard; pending: boolean }) {
         <dt className="text-admin-ink-muted">Comprador:</dt>
         <dd className="break-words">{card.buyerName}</dd>
         <dt className="text-admin-ink-muted">Teléfono de quien compra:</dt>
-        <dd>
-          <PhoneLink phone={card.buyerPhone} who={card.buyerName} />
-        </dd>
+        <dd className="font-admin-mono">{card.buyerPhone}</dd>
         <dt className="text-admin-ink-muted">Recibe:</dt>
         <dd className="break-words">{card.recipient}</dd>
         <dt className="text-admin-ink-muted">Teléfono de quien recibe:</dt>
-        <dd>
-          <PhoneLink phone={card.recipientPhone} who={card.recipient} />
-        </dd>
+        <dd className="font-admin-mono">{card.recipientPhone}</dd>
         <dt className="text-admin-ink-muted">Dirección:</dt>
-        <dd>
-          <AddressLink address={card.address} />
-        </dd>
+        <dd className={`break-words ${card.address === DASH ? "text-admin-ink-muted" : ""}`}>{card.address}</dd>
       </dl>
 
       {card.resolution ? (

@@ -7,12 +7,13 @@ import type { DispatchFilter } from "@/lib/domain/dispatch";
 
 const OPTIONS: { value: DispatchFilter; label: string }[] = [
   { value: "hoy", label: "Hoy" },
+  { value: "atrasados", label: "Atrasados" },
   { value: "proximos", label: "Próximos" },
   { value: "todos", label: "Todos" },
 ];
 
 /**
- * Filtro de "Listos para despacho" en tres posiciones, con su conteo. Vive en
+ * Filtro de "Listos para despacho" en cuatro posiciones, con su conteo. Vive en
  * la URL (`?listos=`); la posición elegida se muestra de inmediato (optimista)
  * hasta que el servidor responde. `hoy` es el valor por defecto y no se escribe.
  */
@@ -32,7 +33,7 @@ export function ReadyFilter({
     <div
       role="group"
       aria-label="Filtrar listos para despacho"
-      className={`inline-flex gap-1 rounded-lg bg-admin-surface-sunken p-1 transition-opacity duration-150 ${pending ? "opacity-60" : ""}`}
+      className={`inline-flex flex-wrap gap-1 rounded-lg bg-admin-surface-sunken p-1 transition-opacity duration-150 ${pending ? "opacity-60" : ""}`}
     >
       {OPTIONS.map(({ value: option, label }) => {
         const selected = value === option;

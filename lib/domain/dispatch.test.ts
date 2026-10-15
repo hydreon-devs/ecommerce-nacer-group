@@ -14,8 +14,9 @@ import {
 const TODAY = "2026-10-13";
 
 describe("parseDispatchFilter", () => {
-  it("accepts the three positions", () => {
+  it("accepts every position", () => {
     assert.equal(parseDispatchFilter("hoy"), "hoy");
+    assert.equal(parseDispatchFilter("atrasados"), "atrasados");
     assert.equal(parseDispatchFilter("proximos"), "proximos");
     assert.equal(parseDispatchFilter("todos"), "todos");
   });
@@ -69,6 +70,10 @@ describe("filterReady / countReadyByFilter", () => {
     assert.deepEqual(ids(filterReady(orders, "hoy", TODAY)), ["late", "today", "none"]);
   });
 
+  it("atrasados = strictly before today, without undated orders", () => {
+    assert.deepEqual(ids(filterReady(orders, "atrasados", TODAY)), ["late"]);
+  });
+
   it("proximos = strictly after today", () => {
     assert.deepEqual(ids(filterReady(orders, "proximos", TODAY)), ["next", "far"]);
   });
@@ -78,7 +83,7 @@ describe("filterReady / countReadyByFilter", () => {
   });
 
   it("counts every position", () => {
-    assert.deepEqual(countReadyByFilter(orders, TODAY), { hoy: 3, proximos: 2, todos: 5 });
+    assert.deepEqual(countReadyByFilter(orders, TODAY), { hoy: 3, atrasados: 1, proximos: 2, todos: 5 });
   });
 });
 

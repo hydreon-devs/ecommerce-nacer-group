@@ -4,9 +4,9 @@
  * pérdida y quién puede marcarse perdido. Sin React ni base de datos.
  */
 
-export type DispatchFilter = "hoy" | "proximos" | "todos";
+export type DispatchFilter = "hoy" | "atrasados" | "proximos" | "todos";
 
-export const DISPATCH_FILTERS: readonly DispatchFilter[] = ["hoy", "proximos", "todos"];
+export const DISPATCH_FILTERS: readonly DispatchFilter[] = ["hoy", "atrasados", "proximos", "todos"];
 
 /** Valida `?listos=`: ausente o inválido equivale a `hoy`; la URL nunca rompe la pantalla. */
 export function parseDispatchFilter(raw: string | string[] | undefined): DispatchFilter {
@@ -43,7 +43,10 @@ export function classifyDelivery(desiredDate: string | null, today: string): Del
   return { kind: "overdue", daysLate: now - desired };
 }
 
-/** `hoy` = hoy + atrasados + sin fecha; `proximos` = posteriores a hoy; `todos` = todos. */
+/**
+ * `hoy` = hoy + atrasados + sin fecha; `atrasados` = solo atrasados (fecha
+ * anterior a hoy); `proximos` = posteriores a hoy; `todos` = todos.
+ */
 export function filterReady<T extends { desired_delivery_date: string | null }>(
   orders: T[],
   filter: DispatchFilter,
@@ -51,8 +54,9 @@ export function filterReady<T extends { desired_delivery_date: string | null }>(
 ): T[] {
   if (filter === "todos") return orders;
   return orders.filter((order) => {
-    const upcoming = classifyDelivery(order.desired_delivery_date, today).kind === "upcoming";
-    return filter === "proximos" ? upcoming : !upcoming;
+    const kind = classifyDelivery(order.desired_delivery_date, today).kind;
+    if (filter === "atrasados") return kind === "overdue";
+    return filter === "proximos" ? kind === "upcoming" : kind !== "upcoming";
   });
 }
 
@@ -62,6 +66,7 @@ export function countReadyByFilter(
 ): Record<DispatchFilter, number> {
   return {
     hoy: filterReady(orders, "hoy", today).length,
+    atrasados: filterReady(orders, "atrasados", today).length,
     proximos: filterReady(orders, "proximos", today).length,
     todos: orders.length,
   };
