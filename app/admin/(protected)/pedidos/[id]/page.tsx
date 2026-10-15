@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrderDetail } from "@/lib/data/orders";
 import {
@@ -12,6 +11,7 @@ import {
 } from "./OrderDetailSections";
 import { DASH } from "../orderView";
 import { buildOrderDetailView, type StatusIndicator } from "./orderDetail";
+import { BackLink } from "../../ui/BackLink";
 
 export const metadata: Metadata = { title: "Detalle de pedido — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ function Indicator({ item }: { item: StatusIndicator }) {
       <dt className="text-xs text-admin-ink-muted">{item.label}</dt>
       <dd>
         <span
-          className={`inline-block rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${item.pillClass}`}
+          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${item.pillClass}`}
         >
           {item.value}
         </span>
@@ -45,24 +45,7 @@ export default async function OrderDetailPage({
   return (
     <div className="animate-view-in flex flex-col gap-5">
       <header className="flex flex-col gap-3">
-        <Link
-          href="/admin/pedidos"
-          className="inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-            aria-hidden="true"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Pedidos
-        </Link>
+        <BackLink href="/admin/pedidos">Pedidos</BackLink>
         <div>
           <h1 className="font-admin-mono text-xl font-bold tracking-tight text-admin-ink">
             Pedido {view.humanNumber}
@@ -78,7 +61,7 @@ export default async function OrderDetailPage({
                     <dt className="text-xs text-admin-ink-muted">Estado</dt>
                     <dd>
                       <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${view.state.pillClass}`}
+                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${view.state.pillClass}`}
                       >
                         {view.state.value}
                       </span>

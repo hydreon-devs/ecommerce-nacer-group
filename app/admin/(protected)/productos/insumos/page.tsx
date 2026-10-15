@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getRecentMovementsByItem, getStockItemUsage, getStockItems } from "@/lib/data/stock-items";
+import { classifyStock, STOCK_LEVEL_LABEL } from "@/lib/domain/stockLevel";
+import { chipClass, primaryButtonClass, secondaryButtonClass } from "../../ui/formClasses";
 import { InventoryTabs } from "../InventoryTabs";
 import { InsumoDetailsDialog } from "./InsumoDetailsDialog";
 
 export const metadata: Metadata = { title: "Insumos — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
-
-function chipClass(active: boolean) {
-  return `rounded-full px-3 py-1 text-sm transition-colors duration-200 ${
-    active
-      ? "bg-admin-accent text-admin-accent-ink"
-      : "bg-admin-surface-raised text-admin-ink-secondary ring-1 ring-admin-border hover:bg-admin-surface-sunken"
-  }`;
-}
 
 export default async function InsumosPage({
   searchParams,
@@ -47,7 +41,7 @@ export default async function InsumosPage({
   return (
     <div className="animate-view-in flex flex-col gap-6">
       <InventoryTabs active="insumos" />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-admin-ink">Insumos</h1>
           <p className="text-sm text-admin-ink-muted">
@@ -56,44 +50,69 @@ export default async function InsumosPage({
         </div>
         <Link
           href="/admin/productos/insumos/nuevo"
-          className="rounded-lg bg-admin-accent px-3 py-2 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90"
+          className={`inline-flex items-center ${primaryButtonClass}`}
         >
           Nuevo insumo
         </Link>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Link href={link({ estado: undefined })} className={chipClass(!estado)}>
+        <Link
+          href={link({ estado: undefined })}
+          aria-current={(!estado) ? "true" : undefined}
+          className={chipClass(!estado)}
+        >
           Todos
         </Link>
-        <Link href={link({ estado: "activos" })} className={chipClass(estado === "activos")}>
+        <Link
+          href={link({ estado: "activos" })}
+          aria-current={(estado === "activos") ? "true" : undefined}
+          className={chipClass(estado === "activos")}
+        >
           Activos
         </Link>
-        <Link href={link({ estado: "inactivos" })} className={chipClass(estado === "inactivos")}>
+        <Link
+          href={link({ estado: "inactivos" })}
+          aria-current={(estado === "inactivos") ? "true" : undefined}
+          className={chipClass(estado === "inactivos")}
+        >
           Inactivos
         </Link>
-        <span className="mx-1 text-admin-border-strong">|</span>
-        <Link href={link({ demo: undefined })} className={chipClass(!demo)}>
-          Con y sin DEMO
+        <span aria-hidden="true" className="mx-1 self-center text-admin-border-strong">|</span>
+        <Link
+          href={link({ demo: undefined })}
+          aria-current={(!demo) ? "true" : undefined}
+          className={chipClass(!demo)}
+        >
+          Todos (reales y DEMO)
         </Link>
-        <Link href={link({ demo: "ocultar" })} className={chipClass(demo === "ocultar")}>
-          Ocultar DEMO
+        <Link
+          href={link({ demo: "ocultar" })}
+          aria-current={(demo === "ocultar") ? "true" : undefined}
+          className={chipClass(demo === "ocultar")}
+        >
+          Solo reales
         </Link>
-        <Link href={link({ demo: "solo" })} className={chipClass(demo === "solo")}>
+        <Link
+          href={link({ demo: "solo" })}
+          aria-current={(demo === "solo") ? "true" : undefined}
+          className={chipClass(demo === "solo")}
+        >
           Solo DEMO
         </Link>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-admin-border bg-admin-surface-raised">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-[34rem] text-left text-sm">
+          <caption className="sr-only">Insumos con existencias, reservas y disponibilidad</caption>
           <thead className="border-b border-admin-border text-xs text-admin-ink-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">Nombre</th>
-              <th className="px-3 py-2 text-right font-medium">Stock</th>
-              <th className="px-3 py-2 text-right font-medium">Reservado</th>
-              <th className="px-3 py-2 text-right font-medium">Disponible</th>
-              <th className="px-3 py-2 font-medium">Estado</th>
-              <th className="px-3 py-2">
+              <th scope="col" className="px-3 py-2 font-medium">Nombre</th>
+              <th scope="col" className="px-3 py-2 text-right font-medium">Stock</th>
+              <th scope="col" className="px-3 py-2 text-right font-medium">Reservado</th>
+              <th scope="col" className="px-3 py-2 text-right font-medium">Disponible</th>
+              <th scope="col" className="px-3 py-2 font-medium">Estado</th>
+              <th scope="col" className="px-3 py-2">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -101,12 +120,28 @@ export default async function InsumosPage({
           <tbody>
             {items.map((item) => {
               const u = usage.get(item.id);
+              const level = classifyStock(item.available);
               return (
                 <tr key={item.id} className="border-b border-admin-border last:border-0">
                   <td className="px-3 py-2 text-admin-ink">{item.name}</td>
                   <td className="px-3 py-2 text-right font-admin-mono">{item.stockQty}</td>
                   <td className="px-3 py-2 text-right font-admin-mono">{item.reserved}</td>
-                  <td className="px-3 py-2 text-right font-admin-mono font-medium">{item.available}</td>
+                  <td className="px-3 py-2 text-right">
+                    <span className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                      <span className="font-admin-mono font-medium">{item.available}</span>
+                      {level !== "ok" ? (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            level === "out"
+                              ? "bg-admin-critical-bg text-admin-critical-fg"
+                              : "bg-admin-warning-bg text-admin-warning-fg"
+                          }`}
+                        >
+                          {STOCK_LEVEL_LABEL[level]}
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
                   <td className="px-3 py-2 text-xs">
                     <span
                       className={`rounded-full px-2 py-0.5 ${
@@ -148,7 +183,15 @@ export default async function InsumosPage({
             {items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-6 text-center text-admin-ink-muted">
-                  Sin insumos con este filtro.
+                  <p>Sin insumos con este filtro.</p>
+                  {estado || demo ? (
+                    <Link
+                      href="/admin/productos/insumos"
+                      className={`mt-3 inline-flex items-center ${secondaryButtonClass}`}
+                    >
+                      Limpiar filtros
+                    </Link>
+                  ) : null}
                 </td>
               </tr>
             ) : null}

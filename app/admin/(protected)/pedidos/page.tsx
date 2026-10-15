@@ -4,6 +4,8 @@ import { getEarliestOrderYear, getOrders } from "@/lib/data/orders";
 import { normalizeSearchTerm } from "@/lib/domain/orderSearch";
 import { ORDER_STATE_LABELS, parseEstadoParam } from "@/lib/domain/orderState";
 import { bogotaYearMonth, parsePeriodParams, periodLabel, periodRange } from "@/lib/domain/period";
+import { ActionStatus } from "../ui/ActionStatus";
+import { primaryButtonClass, secondaryButtonClass } from "../ui/formClasses";
 import { PeriodFilter } from "../PeriodFilter";
 import { RefreshButton } from "../RefreshButton";
 import { EstadoFilter } from "./EstadoFilter";
@@ -56,7 +58,7 @@ export default async function PedidosPage({
           <RefreshButton />
           <Link
             href="/admin/pedidos/nuevo"
-            className="flex items-center gap-1.5 rounded-lg bg-admin-accent px-3 py-2 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90"
+            className={`inline-flex items-center gap-1.5 ${primaryButtonClass}`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -74,21 +76,31 @@ export default async function PedidosPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface-raised shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface-raised shadow-admin-panel">
         {views.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-admin-ink-muted">
-            {q || estado
-              ? `Ningún pedido${estado ? ` en estado "${ORDER_STATE_LABELS[estado]}"` : ""}${q ? ` coincide con "${q}"` : ""}${selected.kind === "all" ? "" : ` en ${periodLabel(selected)}`}.`
-              : "Sin pedidos en el periodo."}
-          </p>
+          <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
+            <p className="text-sm text-admin-ink-muted">
+              {q || estado
+                ? `No hay pedidos con estos filtros${estado ? ` · estado "${ORDER_STATE_LABELS[estado]}"` : ""}${q ? ` · búsqueda "${q}"` : ""}${selected.kind === "all" ? "" : ` · ${periodLabel(selected)}`}.`
+                : "Sin pedidos en el periodo."}
+            </p>
+            {q || estado ? (
+              <Link href="/admin/pedidos" className={`inline-flex items-center ${secondaryButtonClass}`}>
+                Limpiar filtros
+              </Link>
+            ) : null}
+          </div>
         ) : (
           <OrderList views={views} />
         )}
       </div>
       {hasMore ? (
-        <p className="text-xs text-admin-ink-muted">
-          Se muestran los {ORDER_CAP} pedidos más recientes. Filtra por mes o año para ver el resto.
-        </p>
+        <ActionStatus
+          message={{
+            tone: "ok",
+            text: `Se muestran los ${ORDER_CAP} pedidos más recientes. Filtra por mes o año para ver el resto.`,
+          }}
+        />
       ) : null}
     </div>
   );

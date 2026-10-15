@@ -8,7 +8,7 @@ import type { DetailField, OrderDetailView } from "./orderDetail";
  */
 
 const CARD_CLASS =
-  "rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]";
+  "rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel";
 
 const LINK_CLASS =
   "break-words text-admin-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";
@@ -94,9 +94,6 @@ export function ProductsSection({ view }: { view: OrderDetailView }) {
             >
               <div className="min-w-0">
                 <p className="break-words text-sm font-medium text-admin-ink">{line.name}</p>
-                <p className="break-words font-admin-mono text-xs text-admin-ink-muted">
-                  {line.sku}
-                </p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="font-admin-mono text-sm text-admin-ink">{line.total}</p>

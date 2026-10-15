@@ -29,12 +29,12 @@ function ProductionSection({
         {rows.map((row) => (
           <div
             key={row.id}
-            className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]"
+            className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="font-admin-mono text-sm font-semibold text-admin-ink">N° de pedido: {row.humanNumber}</span>
               <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${ORDER_STATE_PILL_CLASS[row.state]}`}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ORDER_STATE_PILL_CLASS[row.state]}`}
               >
                 {ORDER_STATE_LABELS[row.state]}
               </span>

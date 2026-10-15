@@ -24,7 +24,7 @@ export function OrderList({ views }: { views: OrderView[] }) {
     <div>
       <div
         aria-hidden="true"
-        className={`${ROW_GRID} max-md:hidden border-b border-admin-border px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-admin-ink-muted`}
+        className={`${ROW_GRID} max-md:hidden border-b border-admin-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-admin-ink-muted`}
       >
         <span className="pl-6">Pedido</span>
         <span>Vendedor</span>

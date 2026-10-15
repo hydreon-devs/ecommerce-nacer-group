@@ -69,7 +69,7 @@ export function OrderRow({
         </button>
         <div className="pb-3 pl-6 md:py-2 md:pl-0">
           <span
-            className={`inline-block rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ORDER_STATE_PILL_CLASS[row.state]}`}
+            className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${ORDER_STATE_PILL_CLASS[row.state]}`}
           >
             {ORDER_STATE_LABELS[row.state]}
           </span>

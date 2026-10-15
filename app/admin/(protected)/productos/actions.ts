@@ -19,7 +19,7 @@ const CRISALIDAS_PRICE_CEILING: Record<string, number> = {
 export type FormState = { error: string | null; warning?: string | null };
 
 const createProductSchema = z.object({
-  brand: z.enum(["crisalidas", "jagua", "florea"]),
+  brand: z.enum(["crisalidas", "complementos"]),
   sku: z.string().trim().min(3).max(40),
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),

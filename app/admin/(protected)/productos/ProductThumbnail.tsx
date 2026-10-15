@@ -12,7 +12,26 @@ import { useState } from "react";
 export function ProductThumbnail({ url, alt }: { url: string | null; alt: string }) {
   const [broken, setBroken] = useState(false);
 
-  if (!url || broken) return null;
+  if (!url || broken) {
+    return (
+      <span className="absolute inset-0 grid place-items-center text-admin-ink-muted">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-6 w-6"
+          aria-hidden="true"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="9" cy="9" r="1.5" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
+      </span>
+    );
+  }
 
   return (
     <Image
@@ -20,7 +39,7 @@ export function ProductThumbnail({ url, alt }: { url: string | null; alt: string
       alt={alt}
       fill
       sizes="64px"
-      className="object-cover"
+      className="object-cover outline outline-1 -outline-offset-1 outline-admin-ink/10"
       onError={() => setBroken(true)}
     />
   );

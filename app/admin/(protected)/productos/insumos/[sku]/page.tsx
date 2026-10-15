@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getStockItemBySku } from "@/lib/data/stock-items";
+import { BackLink } from "../../../ui/BackLink";
 import { InventoryTabs } from "../../InventoryTabs";
 import { StockItemForm } from "../StockItemForm";
 import { StockItemControls } from "./StockItemControls";
@@ -23,12 +24,15 @@ export default async function InsumoDetailPage({ params }: { params: Promise<{ s
   return (
     <div className="animate-view-in flex max-w-3xl flex-col gap-6">
       <InventoryTabs active="insumos" />
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-admin-ink">{item.name}</h1>
-        <p className="font-admin-mono text-xs text-admin-ink-muted">
-          {item.sku} · {item.kind === "self" ? "espejo de variante" : "insumo"}
-          {item.isActive ? "" : " · inactivo"}
-        </p>
+      <div className="flex flex-col gap-3">
+        <BackLink href="/admin/productos/insumos">Insumos</BackLink>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-admin-ink">{item.name}</h1>
+          <p className="text-xs text-admin-ink-muted">
+            {item.kind === "self" ? "Espejo de variante" : "Insumo"}
+            {item.isActive ? "" : " · inactivo"}
+          </p>
+        </div>
       </div>
 
       <StockItemControls
@@ -60,7 +64,7 @@ export default async function InsumoDetailPage({ params }: { params: Promise<{ s
                 {p.uniformQty !== null ? ` × ${p.uniformQty}` : ""}
                 {p.showVariants
                   ? ` (${p.variants
-                      .map((v) => `${v.label || v.sku}${p.uniformQty === null ? ` × ${v.qtyRequired}` : ""}`)
+                      .map((v) => `${v.label || "Única"}${p.uniformQty === null ? ` × ${v.qtyRequired}` : ""}`)
                       .join(", ")})`
                   : ""}
               </li>

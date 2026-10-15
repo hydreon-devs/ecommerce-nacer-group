@@ -5,14 +5,16 @@ import { splitLostOrders } from "@/lib/domain/lostFollowUp";
 import { RefreshButton } from "../RefreshButton";
 import { ResolveButton } from "./ResolveButton";
 import { buildLostCard, type LostCard } from "./lostView";
+import { BackLink } from "../ui/BackLink";
+import { AddressLink, PhoneLink } from "../ui/ContactLinks";
 
 export const metadata: Metadata = { title: "Pedidos perdidos — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
 
 function LostCardView({ card, pending }: { card: LostCard; pending: boolean }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={card.href}
           className="inline-flex min-h-11 items-center font-admin-mono text-sm font-semibold text-admin-ink underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
@@ -34,10 +36,7 @@ function LostCardView({ card, pending }: { card: LostCard; pending: boolean }) {
         <ul className="flex flex-col divide-y divide-admin-border border-y border-admin-border text-sm">
           {card.lines.map((line, i) => (
             <li key={`${line.sku}-${i}`} className="flex items-baseline justify-between gap-3 py-1.5">
-              <span className="flex min-w-0 flex-col">
-                <span className="font-medium text-admin-ink">{line.name}</span>
-                <span className="font-admin-mono text-xs text-admin-ink-muted">{line.sku}</span>
-              </span>
+              <span className="min-w-0 font-medium text-admin-ink">{line.name}</span>
               <span className="font-admin-mono text-admin-ink-secondary">
                 <span className="sr-only">Cantidad: </span>×{line.qty}
               </span>
@@ -51,14 +50,20 @@ function LostCardView({ card, pending }: { card: LostCard; pending: boolean }) {
       <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm text-admin-ink-secondary">
         <dt className="text-admin-ink-muted">Comprador:</dt>
         <dd className="break-words">{card.buyerName}</dd>
-        <dt className="text-admin-ink-muted">Teléfono:</dt>
-        <dd className="font-admin-mono">{card.buyerPhone}</dd>
+        <dt className="text-admin-ink-muted">Teléfono de quien compra:</dt>
+        <dd>
+          <PhoneLink phone={card.buyerPhone} who={card.buyerName} />
+        </dd>
         <dt className="text-admin-ink-muted">Recibe:</dt>
         <dd className="break-words">{card.recipient}</dd>
-        <dt className="text-admin-ink-muted">Teléfono:</dt>
-        <dd className="font-admin-mono">{card.recipientPhone}</dd>
+        <dt className="text-admin-ink-muted">Teléfono de quien recibe:</dt>
+        <dd>
+          <PhoneLink phone={card.recipientPhone} who={card.recipient} />
+        </dd>
         <dt className="text-admin-ink-muted">Dirección:</dt>
-        <dd className="break-words">{card.address}</dd>
+        <dd>
+          <AddressLink address={card.address} />
+        </dd>
       </dl>
 
       {card.resolution ? (
@@ -120,25 +125,8 @@ export default async function PerdidosPage() {
   return (
     <div className="animate-view-in flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <Link
-          href="/admin/despachos"
-          className="inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-            aria-hidden="true"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Despachos
-        </Link>
-        <div className="flex items-center justify-between">
+        <BackLink href="/admin/despachos">Despachos</BackLink>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-admin-ink">Pedidos perdidos</h1>
             <p className="text-sm text-admin-ink-muted">

@@ -5,8 +5,25 @@ import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { isValidDay } from "@/lib/domain/productionDay";
 
+function Chevron({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d={direction === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />
+    </svg>
+  );
+}
+
 const BUTTON =
-  "inline-flex min-h-11 items-center rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";
+  "inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";
 
 interface DayPickerProps {
   /** Día mostrado (`YYYY-MM-DD`). */
@@ -50,7 +67,8 @@ export function DayPicker({ selected, previous, next, today }: DayPickerProps) {
       className={`flex flex-wrap items-end gap-2 transition-opacity duration-150 ${pending ? "opacity-60" : ""}`}
     >
       <Link href={hrefFor(pathname, previous, today)} className={BUTTON} aria-label="Día anterior">
-        ← Anterior
+        <Chevron direction="left" />
+        Anterior
       </Link>
       <div className="flex flex-col gap-1">
         <label htmlFor="production-day" className="text-xs text-admin-ink-muted">
@@ -61,11 +79,12 @@ export function DayPicker({ selected, previous, next, today }: DayPickerProps) {
           type="date"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="min-h-11 rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink transition-colors duration-150 hover:border-admin-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
+          className="min-h-11 rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-base font-medium sm:text-sm text-admin-ink transition-colors duration-150 hover:border-admin-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
         />
       </div>
       <Link href={hrefFor(pathname, next, today)} className={BUTTON} aria-label="Día siguiente">
-        Siguiente →
+        Siguiente
+        <Chevron direction="right" />
       </Link>
       <Link
         href={pathname}

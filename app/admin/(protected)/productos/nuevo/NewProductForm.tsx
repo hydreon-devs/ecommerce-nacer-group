@@ -1,27 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { ActionStatus } from "../../ui/ActionStatus";
+import { fieldsetClass, inputClass, labelClass, primaryButtonClass, selectClass } from "../../ui/formClasses";
 import { createProduct, type FormState } from "../actions";
-
-const BRANDS = [
-  { value: "crisalidas", label: "Crisálidas y Mariposas" },
-  { value: "jagua", label: "Jagua" },
-  { value: "florea", label: "Florea" },
-];
-
-const CRISALIDAS_CATEGORIES = [
-  "Pequeños Milagros",
-  "Instantes de Vida",
-  "Grandes Transformaciones",
-  "Experiencias de Colección",
-  "Mariposas de Liberación",
-];
-
-const BRAND_PREFIX: Record<string, string> = {
-  crisalidas: "CRI",
-  jagua: "JAG",
-  florea: "FLO",
-};
+import { CRISALIDAS_COLLECTIONS, PRODUCT_TYPES } from "../productTypes";
 
 function slugCode(value: string, maxLength: number): string {
   return value
@@ -33,12 +16,6 @@ function slugCode(value: string, maxLength: number): string {
 }
 
 const initialState: FormState = { error: null };
-
-const INPUT_CLASS =
-  "rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-sm text-admin-ink outline-none transition-colors duration-200 focus:border-admin-accent";
-const LABEL_CLASS = "text-sm font-medium text-admin-ink-secondary";
-const FIELDSET_CLASS =
-  "flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04)]";
 
 /**
  * Sugerencia de SKU en vivo (plan §7) — puramente client-side, no reproduce
@@ -52,13 +29,20 @@ export function NewProductForm() {
   const [tipo, setTipo] = useState("");
   const [name, setName] = useState("");
   const [attributeValue, setAttributeValue] = useState("");
+  // Todos los campos son controlados: React reinicia los no controlados tras la
+  // acción aunque devuelva un error (p. ej. SKU duplicado) y se perdería lo escrito.
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [basePrice, setBasePrice] = useState("");
+  const [attributeKey, setAttributeKey] = useState("");
+  const [stockQty, setStockQty] = useState("0");
 
   const [skuTouched, setSkuTouched] = useState(false);
   const [variantSkuTouched, setVariantSkuTouched] = useState(false);
   const [sku, setSku] = useState("");
   const [variantSku, setVariantSku] = useState("");
 
-  const suggestedSku = `${BRAND_PREFIX[brand]}-${slugCode(tipo, 3)}-${slugCode(name, 12)}`;
+  const suggestedSku = `${PRODUCT_TYPES.find((t) => t.value === brand)?.skuPrefix ?? ""}-${slugCode(tipo, 3)}-${slugCode(name, 12)}`;
   const suggestedVariantSku = attributeValue
     ? `${sku || suggestedSku}-${slugCode(attributeValue, 2)}`
     : `${sku || suggestedSku}-STD`;
@@ -68,21 +52,21 @@ export function NewProductForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      <fieldset className={FIELDSET_CLASS}>
+      <fieldset className={fieldsetClass}>
         <legend className="px-1 text-sm font-semibold text-admin-ink">Producto</legend>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="brand" className={LABEL_CLASS}>
-            Marca
+          <label htmlFor="brand" className={labelClass}>
+            Tipo de producto
           </label>
           <select
             id="brand"
             name="brand"
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
-            className={INPUT_CLASS}
+            className={selectClass}
           >
-            {BRANDS.map((b) => (
+            {PRODUCT_TYPES.map((b) => (
               <option key={b.value} value={b.value}>
                 {b.label}
               </option>
@@ -91,8 +75,8 @@ export function NewProductForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="tipo" className={LABEL_CLASS}>
-            Tipo (línea de producto, ej. ARR, TER, COL — 3 letras)
+          <label htmlFor="tipo" className={labelClass}>
+            Línea (ej. ARR, TER, COL — 3 letras)
           </label>
           <input
             id="tipo"
@@ -101,12 +85,12 @@ export function NewProductForm() {
             onChange={(e) => setTipo(e.target.value)}
             maxLength={3}
             required
-            className={`${INPUT_CLASS} uppercase`}
+            className={`${inputClass} uppercase`}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className={LABEL_CLASS}>
+          <label htmlFor="name" className={labelClass}>
             Nombre
           </label>
           <input
@@ -115,12 +99,12 @@ export function NewProductForm() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className={INPUT_CLASS}
+            className={inputClass}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="sku" className={LABEL_CLASS}>
+          <label htmlFor="sku" className={labelClass}>
             SKU de producto (sugerido, editable)
           </label>
           <input
@@ -132,25 +116,38 @@ export function NewProductForm() {
               setSku(e.target.value.toUpperCase());
             }}
             required
-            className={`${INPUT_CLASS} font-admin-mono uppercase`}
+            className={`${inputClass} font-admin-mono uppercase`}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="description" className={LABEL_CLASS}>
+          <label htmlFor="description" className={labelClass}>
             Descripción
           </label>
-          <textarea id="description" name="description" rows={3} className={INPUT_CLASS} />
+          <textarea
+            id="description"
+            name="description"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         {brand === "crisalidas" ? (
           <div className="flex flex-col gap-1">
-            <label htmlFor="category" className={LABEL_CLASS}>
-              Categoría (franja comercial)
+            <label htmlFor="category" className={labelClass}>
+              Colección (franja comercial)
             </label>
-            <select id="category" name="category" defaultValue="" className={INPUT_CLASS}>
-              <option value="">Sin categoría</option>
-              {CRISALIDAS_CATEGORIES.map((c) => (
+            <select
+              id="category"
+              name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">Sin colección</option>
+              {CRISALIDAS_COLLECTIONS.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -160,33 +157,42 @@ export function NewProductForm() {
         ) : null}
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="basePrice" className={LABEL_CLASS}>
+          <label htmlFor="basePrice" className={labelClass}>
             Precio base (COP)
           </label>
           <input
             id="basePrice"
             name="basePrice"
             type="number"
+            inputMode="numeric"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
             min={0}
             step={1}
             required
-            className={`${INPUT_CLASS} font-admin-mono`}
+            className={`${inputClass} font-admin-mono`}
           />
         </div>
       </fieldset>
 
-      <fieldset className={FIELDSET_CLASS}>
+      <fieldset className={fieldsetClass}>
         <legend className="px-1 text-sm font-semibold text-admin-ink">Variante inicial</legend>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="attributeKey" className={LABEL_CLASS}>
+            <label htmlFor="attributeKey" className={labelClass}>
               Atributo (opcional, ej. color)
             </label>
-            <input id="attributeKey" name="attributeKey" className={INPUT_CLASS} />
+            <input
+              id="attributeKey"
+              name="attributeKey"
+              value={attributeKey}
+              onChange={(e) => setAttributeKey(e.target.value)}
+              className={inputClass}
+            />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="attributeValue" className={LABEL_CLASS}>
+            <label htmlFor="attributeValue" className={labelClass}>
               Valor (ej. blanco)
             </label>
             <input
@@ -194,13 +200,13 @@ export function NewProductForm() {
               name="attributeValue"
               value={attributeValue}
               onChange={(e) => setAttributeValue(e.target.value)}
-              className={INPUT_CLASS}
+              className={inputClass}
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="variantSku" className={LABEL_CLASS}>
+          <label htmlFor="variantSku" className={labelClass}>
             SKU de variante (sugerido, editable)
           </label>
           <input
@@ -212,12 +218,12 @@ export function NewProductForm() {
               setVariantSku(e.target.value.toUpperCase());
             }}
             required
-            className={`${INPUT_CLASS} font-admin-mono uppercase`}
+            className={`${inputClass} font-admin-mono uppercase`}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="stockQty" className={LABEL_CLASS}>
+          <label htmlFor="stockQty" className={labelClass}>
             Stock inicial
           </label>
           <input
@@ -226,20 +232,18 @@ export function NewProductForm() {
             type="number"
             min={0}
             step={1}
-            defaultValue={0}
+            inputMode="numeric"
+            value={stockQty}
+            onChange={(e) => setStockQty(e.target.value)}
             required
-            className={`${INPUT_CLASS} font-admin-mono`}
+            className={`${inputClass} font-admin-mono`}
           />
         </div>
       </fieldset>
 
-      {state.error ? <p className="text-sm text-admin-critical-fg">{state.error}</p> : null}
+      <ActionStatus message={state.error ? { tone: "error", text: state.error } : null} />
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-admin-accent px-3 py-2 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90 disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className={primaryButtonClass}>
         {pending ? "Creando..." : "Crear producto"}
       </button>
     </form>

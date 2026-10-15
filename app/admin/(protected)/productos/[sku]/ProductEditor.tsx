@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import type { OptionRow, ProductDetail, VariantRow } from "@/lib/data/admin-products";
 import type { StockItemRow } from "@/lib/data/stock-items";
 import {
@@ -16,41 +16,80 @@ import {
   setVariantActive,
   uploadVariantImage,
 } from "../actions";
+import { productTypeLabel } from "../productTypes";
+import { PublishBadge } from "../PublishBadge";
+import { ActionStatus } from "../../ui/ActionStatus";
+import { BackLink } from "../../ui/BackLink";
+import { ConfirmDialog } from "../../ui/ConfirmDialog";
+import {
+  inputClass,
+  labelClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  selectClass,
+} from "../../ui/formClasses";
 import { adjustStockItem, saveOptionRecipe, saveVariantRecipe } from "../insumos/actions";
 
 const CARD_CLASS = "rounded-xl border border-admin-border bg-admin-surface-raised";
+const PUBLISH_ERROR = "No se pudo cambiar la publicación. Inténtalo de nuevo.";
+const VARIANT_ACTIVE_ERROR = "No se pudo cambiar el estado de la variante. Inténtalo de nuevo.";
 
 export function ProductEditor({ product }: { product: ProductDetail }) {
   const [published, setPublished] = useState(product.is_published);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [confirmingUnpublish, setConfirmingUnpublish] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  function applyPublished(next: boolean) {
+    setPublishError(null);
+    startTransition(async () => {
+      try {
+        await setProductPublished(product.id, next);
+        // Solo se refleja el cambio cuando el servidor lo confirmó.
+        setPublished(next);
+      } catch {
+        setPublishError(PUBLISH_ERROR);
+      }
+    });
+  }
 
   return (
     <div className="animate-view-in flex flex-col gap-6">
-      <div className={`flex items-center justify-between p-4 ${CARD_CLASS}`}>
+      <BackLink href="/admin/productos">Productos</BackLink>
+      <div className={`flex flex-wrap items-center justify-between gap-3 p-4 ${CARD_CLASS}`}>
         <div>
-          <p className="text-sm font-medium text-admin-ink">{product.name}</p>
-          <p className="font-admin-mono text-xs text-admin-ink-muted">
-            {product.sku} · {product.brand}
-            {product.category ? ` · ${product.category}` : ""}
+          <h1 className="text-lg font-semibold text-admin-ink">{product.name}</h1>
+          <p className="text-xs text-admin-ink-muted">
+            {productTypeLabel(product.brand, product.category)}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              await setProductPublished(product.id, !published);
-              setPublished((v) => !v);
-            })
-          }
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity duration-200 ${
-            published
-              ? "bg-admin-surface-sunken text-admin-ink-secondary"
-              : "bg-admin-warning-bg text-admin-warning-fg"
-          }`}
-        >
-          {published ? "Publicado — despublicar" : "Despublicado — publicar"}
-        </button>
+        <div className="flex items-center gap-2">
+          <PublishBadge published={published} />
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => (published ? setConfirmingUnpublish(true) : applyPublished(true))}
+            className={secondaryButtonClass}
+          >
+            {published ? "Despublicar" : "Publicar"}
+          </button>
+        </div>
+        <ActionStatus
+          message={publishError ? { tone: "error", text: publishError } : null}
+          className="w-full text-xs"
+        />
+        <ConfirmDialog
+          open={confirmingUnpublish}
+          title={`¿Despublicar ${product.name}?`}
+          description="El producto dejará de verse en la tienda. Puedes volver a publicarlo cuando quieras."
+          confirmLabel="Despublicar"
+          tone="danger"
+          onCancel={() => setConfirmingUnpublish(false)}
+          onConfirm={() => {
+            setConfirmingUnpublish(false);
+            applyPublished(false);
+          }}
+        />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -92,8 +131,16 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
   const [active, setActive] = useState(variant.is_active);
   const [imageUrl, setImageUrl] = useState(variant.image_url);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const stockId = useId();
+  const imageId = useId();
   const [pending, startTransition] = useTransition();
   const [imageBroken, setImageBroken] = useState(false);
+  const variantLabel =
+    Object.entries(variant.attributes)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ") || "Variante única";
 
   return (
     <div className={`flex flex-wrap items-center gap-4 p-3 ${CARD_CLASS}`}>
@@ -101,7 +148,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
         {imageUrl && !imageBroken ? (
           <Image
             src={imageUrl}
-            alt={variant.sku}
+            alt={variantLabel}
             fill
             sizes="56px"
             className="object-cover"
@@ -111,12 +158,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
       </div>
 
       <div className="flex min-w-[10rem] flex-1 flex-col gap-1">
-        <p className="font-admin-mono text-xs text-admin-ink-secondary">{variant.sku}</p>
-        <p className="text-xs text-admin-ink-muted">
-          {Object.entries(variant.attributes)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join(", ") || "sin atributos"}
-        </p>
+        <p className="text-sm font-medium text-admin-ink-secondary">{variantLabel}</p>
         <p className="text-xs text-admin-ink-muted">
           Disponible: {variant.availableUnits}
           {variant.availableUnits === 0 && variant.components.length === 0 ? " · sin receta" : ""}
@@ -126,20 +168,25 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
 
       {selfOnly && selfItem ? (
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-admin-ink-muted">Stock</label>
-          <div className="flex gap-1">
+          <label htmlFor={stockId} className={labelClass}>
+            Stock
+          </label>
+          <div className="flex gap-2">
             <input
+              id={stockId}
               type="number"
+              inputMode="numeric"
               min={0}
               value={selfStock}
               onChange={(e) => setSelfStock(Number(e.target.value))}
-              className="w-20 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-xs text-admin-ink outline-none focus:border-admin-accent"
+              className={`${inputClass} w-24 font-admin-mono`}
             />
             <button
               type="button"
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
+                  setNotice(null);
                   const res = await adjustStockItem({
                     itemId: selfItem.id,
                     mode: "set",
@@ -147,10 +194,13 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
                     reason: "Ajuste desde la ficha del producto",
                   });
                   setError(res.ok ? res.warning : res.error);
-                  if (res.ok) router.refresh();
+                  if (res.ok) {
+                    setNotice("Stock actualizado");
+                    router.refresh();
+                  }
                 })
               }
-              className="rounded-lg bg-admin-accent px-2 py-1 text-xs text-admin-accent-ink transition-opacity duration-200 hover:opacity-90"
+              className={primaryButtonClass}
             >
               Guardar
             </button>
@@ -160,9 +210,12 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
         <p className="text-xs text-admin-ink-muted">Stock calculado por receta</p>
       )}
 
-      <label className="flex flex-col gap-1 text-xs text-admin-ink-muted">
-        Imagen
+      <div className="flex flex-col gap-1">
+        <label htmlFor={imageId} className={labelClass}>
+          Imagen
+        </label>
         <input
+          id={imageId}
           type="file"
           accept="image/png,image/jpeg,image/webp"
           onChange={(e) => {
@@ -170,42 +223,63 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
             if (!file) return;
             const fd = new FormData();
             fd.set("file", file);
+            setError(null);
+            setNotice(null);
+            setUploading(true);
             startTransition(async () => {
               const res = await uploadVariantImage(variant.id, variant.sku, fd);
+              setUploading(false);
               if (res.ok) {
                 setImageUrl(res.url);
                 setImageBroken(false);
-                setError(null);
+                setNotice("Imagen actualizada");
               } else {
                 setError(res.error);
               }
             });
           }}
-          className="text-xs text-admin-ink-secondary"
+          className="min-h-11 text-sm text-admin-ink-secondary file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border file:border-admin-border file:bg-admin-surface-raised file:px-3 file:text-sm file:font-medium file:text-admin-ink-secondary"
         />
-      </label>
+      </div>
 
       <button
         type="button"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            await setVariantActive(variant.id, !active);
-            setActive((v) => !v);
+            try {
+              await setVariantActive(variant.id, !active);
+              setActive((v) => !v);
+              setError(null);
+              setNotice(null);
+            } catch {
+              setError(VARIANT_ACTIVE_ERROR);
+            }
           })
         }
-        className={`rounded-lg px-2 py-1 text-xs font-medium transition-opacity duration-200 ${
+        className={`min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-opacity duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent disabled:opacity-60 ${
           active ? "bg-admin-surface-sunken text-admin-ink-secondary" : "bg-admin-warning-bg text-admin-warning-fg"
         }`}
       >
-        {active ? "Activa" : "Despublicada"}
+        {active ? "Publicada" : "No publicada"}
       </button>
 
-      {error ? <p className="w-full text-xs text-admin-critical-fg">{error}</p> : null}
+      <ActionStatus
+        message={
+          error
+            ? { tone: "error", text: error }
+            : uploading
+              ? { tone: "ok", text: "Subiendo imagen…" }
+              : notice
+                ? { tone: "ok", text: notice }
+                : null
+        }
+        className="w-full text-sm"
+      />
 
       {!selfOnly ? (
         <details className="w-full" open={variant.components.length === 0}>
-          <summary className="cursor-pointer text-xs font-medium text-admin-ink-secondary">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-admin-ink-secondary">
             Receta de insumos
           </summary>
           <RecipeEditor
@@ -223,7 +297,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
 function OptionCard({ option, stockItems }: { option: OptionRow; stockItems: StockItemRow[] }) {
   return (
     <details className={`p-3 ${CARD_CLASS}`} open={option.components.length > 0}>
-      <summary className="cursor-pointer text-sm font-medium text-admin-ink">{option.name}</summary>
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-admin-ink">{option.name}</summary>
       <RecipeEditor
         initialRows={option.components}
         stockItems={stockItems}
@@ -279,18 +353,19 @@ function RecipeEditor({
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
 
   return (
-    <div className="mt-3 flex flex-col gap-2">
+    <div className="mt-3 flex flex-col gap-3">
       {rows.map((row, index) => (
         <div key={index} className="flex flex-wrap items-center gap-2">
           <select
             value={row.stockItemId}
             onChange={(e) => update(index, { stockItemId: e.target.value })}
-            className="min-w-[14rem] flex-1 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-xs text-admin-ink outline-none focus:border-admin-accent"
+            aria-label="Insumo"
+            className={`${selectClass} min-w-[14rem] flex-1`}
           >
             {row.stockItemId === "" ? <option value="">Elige un insumo…</option> : null}
             {[...(byId[row.stockItemId] ? [byId[row.stockItemId]] : []), ...pickable].map((i) => (
               <option key={i.id} value={i.id}>
-                {i.sku} — {i.name} ({i.available} disp.)
+                {i.name} ({i.available} disp.)
               </option>
             ))}
           </select>
@@ -301,12 +376,12 @@ function RecipeEditor({
             value={row.qty}
             onChange={(e) => update(index, { qty: Number(e.target.value) })}
             aria-label="Cantidad requerida"
-            className="w-20 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-xs text-admin-ink outline-none focus:border-admin-accent"
+            className={`${inputClass} w-24 font-admin-mono`}
           />
           <button
             type="button"
             onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))}
-            className="rounded-lg bg-admin-surface-sunken px-2 py-1 text-xs text-admin-ink-secondary"
+            className={secondaryButtonClass}
           >
             Quitar
           </button>
@@ -318,7 +393,7 @@ function RecipeEditor({
           type="button"
           disabled={pickable.length === 0}
           onClick={() => setRows((prev) => [...prev, { stockItemId: "", qty: 1 }])}
-          className="rounded-lg border border-dashed border-admin-border-strong px-2 py-1 text-xs text-admin-ink-secondary disabled:opacity-50"
+          className={`${secondaryButtonClass} border-dashed border-admin-border-strong`}
         >
           Agregar insumo
         </button>
@@ -346,7 +421,7 @@ function RecipeEditor({
               }
             })
           }
-          className="ml-auto rounded-lg bg-admin-accent px-3 py-1 text-xs font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90 disabled:opacity-50"
+          className={`${primaryButtonClass} ml-auto`}
         >
           Guardar receta
         </button>
@@ -355,11 +430,10 @@ function RecipeEditor({
       {!validation.ok ? (
         <p className="text-xs text-admin-warning-fg">{rpcErrorMessage(validation.error)}</p>
       ) : null}
-      {message ? (
-        <p className={`text-xs ${message.error ? "text-admin-critical-fg" : "text-admin-ink-secondary"}`}>
-          {message.text}
-        </p>
-      ) : null}
+      <ActionStatus
+        message={message ? { tone: message.error ? "error" : "ok", text: message.text } : null}
+        className="text-xs"
+      />
     </div>
   );
 }
@@ -369,13 +443,18 @@ function AddVariantForm({ productId, productSku }: { productId: string; productS
   const [attributeValue, setAttributeValue] = useState("");
   const [stockQty, setStockQty] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const keyId = useId();
+  const valueId = useId();
+  const qtyId = useId();
   const [pending, startTransition] = useTransition();
 
   return (
     <form
-      className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-admin-border-strong bg-admin-surface-raised p-4"
+      className="flex flex-wrap items-end gap-4 rounded-xl border border-dashed border-admin-border-strong bg-admin-surface-raised p-4"
       onSubmit={(e) => {
         e.preventDefault();
+        setAdded(false);
         const fd = new FormData();
         fd.set("productId", productId);
         fd.set("productSku", productSku);
@@ -386,6 +465,7 @@ function AddVariantForm({ productId, productSku }: { productId: string; productS
           const res = await createVariant(fd);
           if (res.ok) {
             setError(null);
+            setAdded(true);
             setAttributeKey("");
             setAttributeValue("");
             setStockQty(0);
@@ -396,41 +476,54 @@ function AddVariantForm({ productId, productSku }: { productId: string; productS
       }}
     >
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-admin-ink-muted">Atributo</label>
+        <label htmlFor={keyId} className={labelClass}>
+          Atributo
+        </label>
         <input
+          id={keyId}
           value={attributeKey}
           onChange={(e) => setAttributeKey(e.target.value)}
-          className="rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
+          className={inputClass}
           placeholder="color"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-admin-ink-muted">Valor</label>
+        <label htmlFor={valueId} className={labelClass}>
+          Valor
+        </label>
         <input
+          id={valueId}
           value={attributeValue}
           onChange={(e) => setAttributeValue(e.target.value)}
-          className="rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
+          className={inputClass}
           placeholder="blanco"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-admin-ink-muted">Stock inicial</label>
+        <label htmlFor={qtyId} className={labelClass}>
+          Stock inicial
+        </label>
         <input
+          id={qtyId}
           type="number"
+          inputMode="numeric"
           min={0}
           value={stockQty}
           onChange={(e) => setStockQty(Number(e.target.value))}
-          className="w-24 rounded-lg border border-admin-border bg-admin-surface px-2 py-1 text-sm text-admin-ink outline-none focus:border-admin-accent"
+          className={`${inputClass} w-24 font-admin-mono`}
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-admin-accent px-3 py-1.5 text-sm font-medium text-admin-accent-ink transition-opacity duration-200 hover:opacity-90 disabled:opacity-60"
+        className={primaryButtonClass}
       >
         Agregar variante
       </button>
-      {error ? <p className="w-full text-xs text-admin-critical-fg">{error}</p> : null}
+      <ActionStatus
+        message={error ? { tone: "error", text: error } : added ? { tone: "ok", text: "Variante agregada" } : null}
+        className="w-full text-sm"
+      />
     </form>
   );
 }

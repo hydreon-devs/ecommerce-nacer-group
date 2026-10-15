@@ -12,7 +12,7 @@ import { sortByDesiredDate } from "@/lib/domain/fulfillmentFlow";
 import { bogotaToday } from "@/lib/domain/productionDay";
 import { AdvanceOrderButton } from "../AdvanceOrderButton";
 import { RefreshButton } from "../RefreshButton";
-import { DASH } from "../pedidos/orderView";
+import { AddressLink, PhoneLink } from "../ui/ContactLinks";
 import { LostButton } from "./LostButton";
 import { ReadyFilter } from "./ReadyFilter";
 import { buildDispatchCard, type DateTone, type DispatchCard } from "./dispatchView";
@@ -35,16 +35,16 @@ const READY_EMPTY: Record<DispatchFilter, string> = {
 
 function DispatchCardView({ card, inDispatch }: { card: DispatchCard; inDispatch: boolean }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-[0_1px_2px_rgba(11,17,32,0.04),0_8px_24px_-12px_rgba(11,17,32,0.12)]">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-col gap-3 rounded-xl border border-admin-border bg-admin-surface-raised p-4 shadow-admin-panel">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-admin-mono text-sm font-semibold text-admin-ink">N° de pedido: {card.humanNumber}</span>
-        <span className="rounded-full bg-admin-surface-sunken px-2.5 py-1 text-[11px] font-semibold text-admin-ink-secondary">
+        <span className="rounded-full bg-admin-surface-sunken px-2.5 py-0.5 text-xs font-semibold text-admin-ink-secondary">
           {card.deliveryMethod}
         </span>
       </div>
 
       <span
-        className={`self-start rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${DATE_TONE_CLASS[card.dateBadge.tone]}`}
+        className={`self-start rounded-full px-2.5 py-0.5 text-xs font-semibold ${DATE_TONE_CLASS[card.dateBadge.tone]}`}
       >
         {card.dateBadge.text}
       </span>
@@ -84,10 +84,14 @@ function DispatchCardView({ card, inDispatch }: { card: DispatchCard; inDispatch
       <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm text-admin-ink-secondary">
         <dt className="text-admin-ink-muted">Recibe:</dt>
         <dd>{card.recipient}</dd>
-        <dt className="text-admin-ink-muted">Teléfono:</dt>
-        <dd className="font-admin-mono">{card.recipientPhone}</dd>
+        <dt className="text-admin-ink-muted">Teléfono de quien recibe:</dt>
+        <dd>
+          <PhoneLink phone={card.recipientPhone} who={card.recipient} />
+        </dd>
         <dt className="text-admin-ink-muted">Dirección:</dt>
-        <dd className={card.address === DASH ? "text-admin-ink-muted" : ""}>{card.address}</dd>
+        <dd>
+          <AddressLink address={card.address} />
+        </dd>
       </dl>
 
       {card.step ? (
@@ -95,6 +99,14 @@ function DispatchCardView({ card, inDispatch }: { card: DispatchCard; inDispatch
           <AdvanceOrderButton
             orderId={card.id}
             label={inDispatch ? "Entregado" : card.step.label}
+            confirm={
+              inDispatch
+                ? {
+                    title: `¿Marcar el pedido ${card.humanNumber} como entregado?`,
+                    description: "No se puede deshacer.",
+                  }
+                : undefined
+            }
           />
           {inDispatch && card.canMarkLost ? (
             <LostButton orderId={card.id} humanNumber={card.humanNumber} />
@@ -222,7 +234,13 @@ export default async function DespachosPage({
           >
             Pedidos perdidos
             {unresolvedLost !== null ? (
-              <span className="rounded-full bg-admin-surface-sunken px-2 py-0.5 font-admin-mono text-xs text-admin-ink">
+              <span
+                className={`rounded-full px-2 py-0.5 font-admin-mono text-xs ${
+                  unresolvedLost > 0
+                    ? "bg-admin-warning-bg font-semibold text-admin-warning-fg"
+                    : "bg-admin-surface-sunken text-admin-ink"
+                }`}
+              >
                 <span className="sr-only">Por resolver: </span>
                 {unresolvedLost}
               </span>

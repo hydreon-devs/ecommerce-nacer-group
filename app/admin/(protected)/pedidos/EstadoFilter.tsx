@@ -33,7 +33,7 @@ export function EstadoFilter({ estado }: { estado: OrderState | null }) {
             router.push(withParam(`${pathname}${window.location.search}`, "estado", next));
           });
         }}
-        className="rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
+        className="min-h-11 rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-base font-medium sm:text-sm text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
       >
         <option value="">Todos los estados</option>
         {ORDER_STATES.map((state) => (

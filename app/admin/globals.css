@@ -22,7 +22,7 @@
   --admin-surface-sunken: #eef2f6;
   --admin-ink: #0b1120;
   --admin-ink-secondary: #4b5a52;
-  --admin-ink-muted: #7c8b83;
+  --admin-ink-muted: #5f6e66;
   --admin-border: #e1e8e2;
   --admin-border-strong: #c7d2cb;
   --admin-accent: #4b6b4e;
@@ -111,6 +111,10 @@
   --color-admin-series-orange: var(--admin-series-orange);
   --color-admin-series-aqua: var(--admin-series-aqua);
   --shadow-admin-card: var(--admin-shadow-card);
+  /* Tarjetas de página con más cuerpo que la de lista (misma sombra que antes, ahora con nombre). */
+  --shadow-admin-panel: 0 1px 2px rgba(11, 17, 32, 0.04), 0 8px 24px -12px rgba(11, 17, 32, 0.12);
+  /* Diálogos y superposiciones modales. */
+  --shadow-admin-overlay: 0 24px 64px -16px rgba(11, 17, 32, 0.4);
   --font-admin-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
 }
 
@@ -160,8 +164,16 @@ body.admin-shell {
 @media (prefers-reduced-motion: reduce) {
   .admin-shell * {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ThemeToggle lo pone un frame al cambiar de tema: evita que cada elemento
+   anime su color por separado y se vea un destello a medio camino. */
+.theme-switching,
+.theme-switching * {
+  transition: none !important;
 }
 
 /* Animación breve aprobada en la maqueta (specs/003) — entrada de vista,

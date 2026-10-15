@@ -2,12 +2,13 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
+import { secondaryButtonClass } from "./ui/formClasses";
 import { withParam } from "@/lib/domain/orderSearch";
 import { MONTH_NAMES, type PeriodSelection, type YearMonth } from "@/lib/domain/period";
 
 const LABEL = "text-xs text-admin-ink-muted";
 const SELECT =
-  "rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";
+  "min-h-11 rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-base font-medium sm:text-sm text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent";
 
 interface PeriodFilterProps {
   selected: PeriodSelection;
@@ -139,7 +140,7 @@ export function PeriodFilter({ selected, current, minYear, search, estado }: Per
         type="button"
         onClick={() => go({ kind: "all" }, false)}
         disabled={value.kind === "all" && !search && !estado}
-        className="rounded-lg border border-admin-border bg-admin-surface-raised px-3 py-2 text-sm font-medium text-admin-ink-secondary transition-colors duration-150 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent disabled:opacity-60"
+        className={secondaryButtonClass}
       >
         Limpiar filtros
       </button>

@@ -22,7 +22,7 @@ export function OrderPanel({
           <section key={group.id} aria-labelledby={`${group.id}-${orderId}`} className="min-w-0">
             <h3
               id={`${group.id}-${orderId}`}
-              className="mb-2 text-[10.5px] font-semibold uppercase tracking-wide text-admin-ink-muted"
+              className="mb-2 text-xs font-semibold uppercase tracking-wide text-admin-ink-muted"
             >
               {group.title}
             </h3>

@@ -11,7 +11,7 @@ import {
   type RecipeRow,
 } from "@/lib/domain/stockRecipe";
 
-export type FormState = { error: string | null };
+export type FormState = { error: string | null; saved?: boolean };
 
 type RpcResult = { ok: boolean; error?: string; mensaje?: string; [key: string]: unknown };
 
@@ -89,6 +89,9 @@ export async function updateStockItem(
     };
   }
   revalidatePath("/admin/productos/insumos");
+  // Si el SKU cambió, la URL de la ficha cambia: hay que redirigir. Si no, se
+  // queda en la página y se confirma el guardado en el formulario.
+  if (formData.get("previousSku") === input.sku) return { error: null, saved: true };
   redirect(`/admin/productos/insumos/${encodeURIComponent(input.sku)}`);
 }
 

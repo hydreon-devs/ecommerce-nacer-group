@@ -15,8 +15,11 @@ export function ThemeToggle() {
       current === "dark" ||
       (current !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     const next = isDark ? "light" : "dark";
+    // Sin transiciones durante el cambio: evita el destello de colores a medio camino.
+    root.classList.add("theme-switching");
     root.setAttribute("data-theme", next);
     localStorage.setItem("admin-theme", next);
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
   }
 
   return (
@@ -25,7 +28,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label="Cambiar tema claro/oscuro"
       title="Cambiar tema"
-      className="grid h-8 w-8 place-items-center rounded-lg border border-admin-border bg-admin-surface-raised text-admin-ink-secondary transition-colors duration-200 hover:border-admin-border-strong hover:text-admin-ink active:scale-95"
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-admin-border bg-admin-surface-raised text-admin-ink-secondary transition-colors duration-200 hover:border-admin-border-strong hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent active:scale-[0.96]"
     >
       <svg
         viewBox="0 0 24 24"

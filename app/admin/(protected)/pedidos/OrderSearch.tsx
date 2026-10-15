@@ -90,14 +90,14 @@ export function OrderSearch({ q }: { q: string | null }) {
           placeholder="Ej. 0007"
           aria-label="Buscar por número de pedido"
           onChange={(e) => onChange(e.target.value)}
-          className="w-44 rounded-lg border border-admin-border bg-admin-surface-raised py-2 pl-3 pr-9 font-admin-mono text-sm text-admin-ink-secondary transition-colors duration-150 placeholder:font-sans placeholder:text-admin-ink-muted hover:border-admin-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent [&::-webkit-search-cancel-button]:hidden"
+          className="min-h-11 w-44 rounded-lg border border-admin-border bg-admin-surface-raised py-2 pl-3 pr-11 font-admin-mono text-base sm:text-sm text-admin-ink-secondary transition-colors duration-150 placeholder:font-sans placeholder:text-admin-ink-muted hover:border-admin-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent [&::-webkit-search-cancel-button]:hidden"
         />
         {text !== "" ? (
           <button
             type="button"
             aria-label="Quitar búsqueda"
             onClick={() => apply("")}
-            className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-lg text-admin-ink-muted transition-colors duration-150 hover:text-admin-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-admin-accent"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-admin-ink-muted transition-colors duration-150 hover:text-admin-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-admin-accent"
           >
             <svg
               viewBox="0 0 24 24"
