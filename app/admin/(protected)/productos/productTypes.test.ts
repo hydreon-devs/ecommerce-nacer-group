@@ -55,7 +55,7 @@ describe("groupProductsByType", () => {
   it("puts complementos in a flat list and ignores other brands", () => {
     const [, com] = groupProductsByType([
       item("x", "complementos", null),
-      item("y", "jagua", null),
+      item("y", "florea", null),
     ]);
     assert.equal(com.count, 1);
     assert.equal(com.collections.length, 0);

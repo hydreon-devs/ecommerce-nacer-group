@@ -7,9 +7,12 @@ puede violar nunca.
 
 | Marca | En el sitio |
 |---|---|
-| Crisálidas y Mariposas | **Vende.** Catálogo, carrito, checkout. |
-| Jagua | **Vende.** Catálogo, carrito, checkout. |
+| Crisálidas y Mariposas | **Vende.** Catálogo, carrito, checkout. Incluye la línea **Complementos**. |
 | Florea | **NO vende.** Solo sección informativa con enlace al sitio externo. |
+
+En `products.brand` solo existen `crisalidas` (SKU `CRI-`, agrupados por colección) y
+`complementos` (SKU `COM-`, sin colección). Jagua salió del negocio y sus productos
+pasaron a Complementos: no volver a agregarla.
 
 Florea no tiene productos, precios, stock ni carrito en el sitio. Es una sección de
 marca con un enlace saliente. La integración de venta es futura y sin fecha: se

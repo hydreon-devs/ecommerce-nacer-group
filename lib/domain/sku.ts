@@ -2,13 +2,12 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 
 /**
- * Prefijos confirmados contra `products.sku` real (plan §7) — no de ningún
- * documento. `nacer-dominio` documenta `CM`/`JA`/`FL`, que no es lo que hay
- * cargado en la base real.
+ * Prefijos confirmados contra `products.sku` real (plan §7). Florea se conserva
+ * para cuando venda en el sitio; hoy la base solo admite crisalidas y complementos.
  */
 const BRAND_PREFIX: Record<string, string> = {
   crisalidas: "CRI",
-  jagua: "JAG",
+  complementos: "COM",
   florea: "FLO",
 };
 

@@ -22,7 +22,7 @@ function makeOrder(overrides: Partial<OrderTableRow> = {}): OrderTableRow {
     payment_source: "PSE",
     occasion: "Cumpleaños",
     desired_delivery_date: "2026-10-20",
-    productSummary: "Mariposa azul ×1, Jagua ×2",
+    productSummary: "Mariposa azul ×1, Chocolates x 9 ×2",
     totalQty: 3,
     productCost: 173000,
     saleDetails: {
