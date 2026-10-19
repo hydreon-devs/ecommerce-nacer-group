@@ -27,6 +27,16 @@
   --color-amber: #c9a24b;
   --color-amber-soft: #ddc088;
 
+  /*
+   * Derivados de contraste (también PROVISIONALES): el `ink` con opacidad no
+   * llega a 4.5:1 como texto secundario (ink/50 = 3.3:1) y `moss` sobre su
+   * propia tinta (badge) queda en 4.4:1. Estos dos son los reemplazos sólidos.
+   * - ink-muted: texto secundario, 6.3:1 sobre cream y 5.8:1 sobre cream-soft.
+   * - moss-deep: texto/hover sobre moss o su tinta, 7.3:1 sobre cream.
+   */
+  --color-ink-muted: #595951;
+  --color-moss-deep: #3a553d;
+
   /* Estado / feedback (derivados, no de marca) */
   --color-success: #4b6b4e;
   --color-warning: #c9a24b;
@@ -45,6 +55,18 @@
    * de otro tono, hay que volver a medir este token.
    */
   --color-hero-ambient: #110a03;
+
+  /*
+   * Elevación: anillo de 1px + dos capas de profundidad en una sola sombra
+   * (reemplaza el borde de las tarjetas). Los componentes que la usan dejan
+   * `border: 1px solid transparent` para que forced-colors pinte un contorno.
+   */
+  --shadow-card:
+    0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 2px -1px oklch(0 0 0 / 0.06),
+    0 2px 4px 0 oklch(0 0 0 / 0.04);
+  --shadow-card-hover:
+    0 0 0 1px oklch(0 0 0 / 0.08), 0 1px 2px -1px oklch(0 0 0 / 0.08),
+    0 6px 14px -2px oklch(0 0 0 / 0.1);
 
   /* Tipografía */
   --font-display: var(--font-fraunces);
@@ -66,6 +88,11 @@
   --color-warning: var(--color-warning);
   --color-danger: var(--color-danger);
   --color-hero-ambient: var(--color-hero-ambient);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-moss-deep: var(--color-moss-deep);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);

@@ -187,7 +187,7 @@ export const cardHover: Variants = {
   },
 };
 
-export const tapScale = { scale: 0.97 };
+export const tapScale = { scale: 0.96 };
 
 export const chipTransition: Transition = {
   duration: DURATION_UI_FAST,

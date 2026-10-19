@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { ProductCard } from "@/components/catalogo/ProductCard";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { Producto } from "@/lib/domain/types";
 
@@ -18,19 +19,24 @@ interface FeaturedCarouselProps {
  * los botones son una ayuda para puntero, no el único camino.
  *
  * Las tarjetas son `ProductCard`, el mismo componente del catálogo: reutiliza
- * `DisponibilidadBadge`, `formatCop` y el registro sobrio para ocasiones de
- * duelo. Duplicar esa lógica aquí sería la forma más fácil de que un `Bajo
- * pedido` terminara pintado como agotado en el Home y no en el catálogo.
+ * `DisponibilidadBadge` y `formatCop`. Duplicar esa lógica aquí sería la forma
+ * más fácil de que el Home y el catálogo muestren la disponibilidad distinto.
  *
- * Muestra un número EXACTO de tarjetas por vista: una en móvil, tres desde
- * `md`. Las tarjetas no tienen ancho fijo — se reparten el ancho de contenido
- * del contenedor — así que ninguna queda cortada contra el margen.
+ * Tres tarjetas exactas por vista desde `md`, que se reparten el ancho de
+ * contenido. En móvil cada tarjeta mide 85%: la siguiente asoma un pedazo y esa
+ * es la pista de que hay más (el scroll-snap alinea la tarjeta activa al
+ * margen). Los botones se ven también en móvil como segunda señal.
  *
- * Eso tiene un costo que hay que compensar: la versión anterior dejaba la fila
- * cortada a propósito, y ese recorte era la única pista de que había más
- * productos. Sin él, los controles dejan de ser una ayuda para puntero y pasan
- * a ser la señal de que el carrusel se mueve — por eso ahora se ven también en
- * móvil, donde antes estaban ocultos.
+ * Recorte de sombras: un contenedor con `overflow-x` no visible obliga a
+ * `overflow-y` a computarse como `auto`, así que todo lo que sobresale de su
+ * caja de relleno se corta — incluida la sombra de la tarjeta y su elevación en
+ * hover (`y: -4`, `scale: 1.02`, `shadow-card-hover`). Por eso el scroller
+ * lleva relleno vertical (`py-8`, más que lo que sobresale la sombra, ~24px) y
+ * un margen negativo que devuelve el espaciado original al layout.
+ *
+ * No hay indicador de posición ("1 / n"): el paso se mide por geometría y con
+ * una tarjeta asomando la "página" actual es ambigua; los botones deshabilitados
+ * en los extremos ya dicen dónde está el inicio y el fin.
  */
 export function FeaturedCarousel({ productos }: FeaturedCarouselProps) {
   const scrollerRef = useRef<HTMLUListElement>(null);
@@ -102,11 +108,17 @@ export function FeaturedCarousel({ productos }: FeaturedCarouselProps) {
   if (productos.length === 0) return null;
 
   return (
-    <section className="border-b border-ink/8 bg-cream-soft/45 py-20 md:py-28">
+    <section
+      aria-labelledby="destacados-title"
+      className="border-b border-ink/8 bg-cream-soft/45 py-20 md:py-28"
+    >
       <div className="flex flex-col gap-6 px-6 md:flex-row md:items-end md:justify-between md:px-16">
         <div className="max-w-xl">
           <SectionLabel>Destacados</SectionLabel>
-          <h2 className="font-display mt-3 text-3xl leading-tight text-ink md:text-5xl">
+          <h2
+            id="destacados-title"
+            className="font-display mt-3 text-3xl leading-tight text-ink md:text-5xl"
+          >
             Una selección para empezar
           </h2>
         </div>
@@ -114,21 +126,22 @@ export function FeaturedCarousel({ productos }: FeaturedCarouselProps) {
         <div className="flex items-center gap-4">
           <Link
             href="/catalogo"
-            className="font-body text-sm font-medium text-moss transition-colors duration-200 hover:text-ink"
+            className="inline-flex min-h-11 items-center gap-1 rounded-full font-body text-sm font-medium text-moss-deep transition-colors duration-200 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
           >
-            Ver todo el catálogo →
+            Ver todo el catálogo
+            <ChevronRightIcon width={16} height={16} />
           </Link>
 
           <div className="flex items-center gap-2">
             <CarouselButton
               direction="prev"
               disabled={!canPrev}
-              onClick={() => scrollPage(-1)}
+              onClick={() => canPrev && scrollPage(-1)}
             />
             <CarouselButton
               direction="next"
               disabled={!canNext}
-              onClick={() => scrollPage(1)}
+              onClick={() => canNext && scrollPage(1)}
             />
           </div>
         </div>
@@ -136,7 +149,7 @@ export function FeaturedCarousel({ productos }: FeaturedCarouselProps) {
 
       <ul
         ref={scrollerRef}
-        className="mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-px-6 px-6 pb-2 md:mt-14 md:scroll-px-16 md:px-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mb-6 mt-2 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-px-6 px-6 py-8 md:mt-6 md:scroll-px-16 md:px-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {/* El porcentaje resuelve contra la caja de contenido del scroller, o
             sea el ancho entre los paddings — justo el hueco visible. Con tres
@@ -146,7 +159,7 @@ export function FeaturedCarousel({ productos }: FeaturedCarouselProps) {
         {productos.map((producto) => (
           <li
             key={producto.id}
-            className="w-full shrink-0 snap-start md:w-[calc((100%_-_2.5rem)/3)]"
+            className="w-[85%] shrink-0 snap-start md:w-[calc((100%_-_2.5rem)/3)]"
           >
             <ProductCard producto={producto} />
           </li>
@@ -165,26 +178,23 @@ function CarouselButton({
   disabled: boolean;
   onClick: () => void;
 }) {
+  // `aria-disabled` y no `disabled`: Firefox restaura el estado `disabled` de
+  // los controles de formulario al recargar (o volver con bfcache) antes de que
+  // React hidrate. El botón queda habilitado en el DOM mientras el primer render
+  // lo pide deshabilitado (aún no se midió el scroll) y la hidratación falla.
+  // `aria-disabled` no es estado de formulario, así que no se restaura; además
+  // mantiene el botón enfocable. El clic se ignora en el padre.
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      aria-label={direction === "prev" ? "Anterior" : "Siguiente"}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink/70 transition-colors duration-200 hover:border-moss hover:text-moss disabled:cursor-default disabled:border-ink/8 disabled:text-ink/25 disabled:hover:border-ink/8 disabled:hover:text-ink/25"
+      aria-disabled={disabled}
+      aria-label={
+        direction === "prev" ? "Productos anteriores" : "Productos siguientes"
+      }
+      className="flex size-11 items-center justify-center rounded-full border border-transparent bg-cream text-ink-muted shadow-card transition-[color,box-shadow,scale] duration-150 ease-out hover:text-moss-deep hover:shadow-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss active:scale-[0.96] aria-disabled:cursor-default aria-disabled:text-ink/40 aria-disabled:shadow-none aria-disabled:hover:text-ink/40 aria-disabled:hover:shadow-none aria-disabled:active:scale-100 motion-reduce:transition-none"
     >
-      <svg
-        viewBox="0 0 24 24"
-        className={`h-4 w-4 ${direction === "prev" ? "rotate-180" : ""}`}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
+      {direction === "prev" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
     </button>
   );
 }

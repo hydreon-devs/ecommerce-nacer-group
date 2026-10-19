@@ -13,6 +13,12 @@ import { buildWhatsAppUrl, WHATSAPP_GENERAL_MESSAGE } from "@/lib/whatsapp";
  * ocurra justo antes de que el header pise fondo claro. */
 const HEADER_CLEARANCE = 88;
 
+/** Por encima de este scroll el header siempre se ve (arranque de la página). */
+const ALWAYS_VISIBLE_UNTIL = HEADER_CLEARANCE;
+/** Desplazamiento mínimo por evento para cambiar de dirección: filtra el
+ * temblor del trackpad y el rebote elástico de iOS. */
+const SCROLL_DELTA = 6;
+
 interface NavItem {
   href: string;
   label: string;
@@ -50,6 +56,10 @@ const WHATSAPP_HREF = buildWhatsAppUrl(WHATSAPP_GENERAL_MESSAGE);
  * 64px, en plena zona oscura, y dejaba un pill crema flotando sobre el video
  * durante casi todo el hero. Si el elemento no existe (cualquier ruta que no
  * sea Home), la variante sólida es la única.
+ *
+ * Se esconde al bajar y reaparece al subir (o al volver arriba). Nunca se
+ * esconde con el menú móvil abierto, y si el foco de teclado entra al header
+ * se muestra. Solo `transform`, 300ms; sin transición con reduced motion.
  */
 export function SiteHeader() {
   const pathname = usePathname();
@@ -57,6 +67,7 @@ export function SiteHeader() {
   const heroHeightRef = useRef<number | null>(null);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   // Home es la única ruta con zona de hero. Se deriva del pathname y no de la
   // medición para que el servidor y el primer render de cliente coincidan: si
@@ -86,6 +97,10 @@ export function SiteHeader() {
   }, [pathname]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    const delta = latest - (scrollY.getPrevious() ?? latest);
+    if (latest < ALWAYS_VISIBLE_UNTIL || delta < -SCROLL_DELTA) setHidden(false);
+    else if (delta > SCROLL_DELTA && !menuOpen) setHidden(true);
+
     const heroHeight = heroHeightRef.current;
     if (heroHeight === null) return;
     setScrolledPastHero(latest > heroHeight - HEADER_CLEARANCE);
@@ -122,7 +137,12 @@ export function SiteHeader() {
   const solid = !overHero;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex flex-col items-center">
+    <header
+      onFocusCapture={() => setHidden(false)}
+      className={`fixed inset-x-0 top-0 z-50 flex flex-col items-center transition-transform duration-300 ease-out motion-reduce:transition-none ${
+        hidden ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
       {overHero && (
         <div
           aria-hidden="true"

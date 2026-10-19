@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { RevealSection } from "@/components/motion/RevealSection";
 import { StaggerChild } from "@/components/motion/StaggerChild";
+import { ChevronRightIcon } from "@/components/ui/icons";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { HomeSection } from "@/lib/content/home";
 
@@ -75,7 +76,7 @@ export function NarrativeSection({ section }: { section: HomeSection }) {
               alt={section.image.alt}
               fill
               sizes="(min-width: 768px) 38vw, 100vw"
-              className="object-cover"
+              className="rounded-xl object-cover outline outline-1 -outline-offset-1 outline-black/10"
             />
           </div>
         </RevealSection>
@@ -101,9 +102,10 @@ export function NarrativeSection({ section }: { section: HomeSection }) {
           {section.cta && (
             <Link
               href={section.cta.href}
-              className="mt-6 inline-flex items-center gap-2 font-body text-sm font-medium text-moss hover:underline"
+              className="mt-6 inline-flex min-h-11 items-center gap-1 rounded-full font-body text-sm font-medium text-moss-deep hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-moss"
             >
-              {section.cta.label} →
+              {section.cta.label}
+              <ChevronRightIcon width={16} height={16} />
             </Link>
           )}
         </RevealSection>
@@ -136,11 +138,12 @@ function CenteredSection({ section }: { section: HomeSection }) {
       href={section.cta.href}
       className={
         staggered
-          ? "mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 font-body text-sm text-cream transition-colors hover:bg-ink/85"
-          : "mt-8 inline-flex items-center gap-2 font-body text-sm font-medium text-moss hover:underline"
+          ? "mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 font-body text-sm text-cream transition-colors duration-200 hover:bg-ink/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+          : "mt-8 inline-flex min-h-11 items-center gap-1 rounded-full font-body text-sm font-medium text-moss-deep hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-moss"
       }
     >
-      {section.cta.label} →
+      {section.cta.label}
+      <ChevronRightIcon width={16} height={16} />
     </Link>
   );
 

@@ -6,7 +6,7 @@ import { ValueProps } from "@/components/home/ValueProps";
 import { HeroIntro } from "@/components/hero/HeroIntro";
 import { HeroSection } from "@/components/hero/HeroSection";
 import { HOME_PRINCIPLES, HOME_SECTIONS } from "@/lib/content/home";
-import { getFeaturedProducts } from "@/lib/data/products";
+import { getFeaturedProducts } from "@/lib/data/storefront-products";
 
 /**
  * Home. Server component: las únicas hojas de cliente son la banda del hero
@@ -27,8 +27,8 @@ import { getFeaturedProducts } from "@/lib/data/products";
  * Home que lleva a comprar, y quien llega hasta el final de la banda ya invirtió
  * scroll suficiente como para merecer producto y no otra sección de discurso.
  */
-export default function Home() {
-  const destacados = getFeaturedProducts();
+export default async function Home() {
+  const destacados = await getFeaturedProducts();
 
   // El recorrido son las secciones con imagen; el hilo pasa por ellas y termina
   // donde termina el relato. El cierre (`cta-final`) queda fuera a propósito:

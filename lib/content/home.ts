@@ -45,7 +45,7 @@ export const VALUE_PROPS: ValueProp[] = [
     id: "ocasion",
     numeral: "03",
     title: "Pensado para un momento",
-    body: "Celebrar, agradecer, acompañar una pérdida. El catálogo se filtra por la ocasión, que es como uno busca de verdad.",
+    body: "Celebrar, agradecer, acompañar una pérdida. El catálogo se ordena por colecciones pensadas para cada momento.",
   },
   {
     id: "tiempo",
@@ -150,7 +150,7 @@ export const HOME_SECTIONS: HomeSection[] = [
     eyebrow: "Para celebrar",
     title: "Liberaciones guiadas, en el momento exacto",
     body: "Cumpleaños, aniversarios, cierres de ciclo. Un guía especializado acompaña todo el proceso, desde la cría certificada hasta el instante en que las mariposas toman el aire.",
-    cta: { label: "Ver experiencias", href: "/catalogo?ocasion=experiencia" },
+    cta: { label: "Ver experiencias", href: "/catalogo?coleccion=mariposas-de-liberacion" },
     image: {
       src: "/images/recorrido/experiencia.webp",
       alt: "Unas manos abiertas liberando varias mariposas monarca a contraluz en un jardín tropical.",
@@ -164,7 +164,7 @@ export const HOME_SECTIONS: HomeSection[] = [
     eyebrow: "Para acompañar",
     title: "También hay espacio para lo difícil",
     body: "No todo lo que hacemos es para celebrar. Hay detalles pensados para acompañar una pérdida, sin necesidad de encontrar las palabras correctas — a veces basta con estar presente.",
-    cta: { label: "Ver detalles de acompañamiento", href: "/catalogo?ocasion=acompañar" },
+    cta: { label: "Ver el catálogo", href: "/catalogo" },
     image: {
       src: "/images/recorrido/acompanar.webp",
       alt: "Un cuenco pequeño de cerámica sin esmaltar junto a un ala de monarca, sobre lino claro y luz difusa.",

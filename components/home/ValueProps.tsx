@@ -48,7 +48,7 @@ export function ValueProps() {
                 <h3 className="font-display mt-5 text-xl leading-snug text-ink md:text-2xl">
                   {prop.title}
                 </h3>
-                <p className="font-body mt-3 text-sm text-ink/70 md:text-base">
+                <p className="font-body mt-3 text-sm text-ink-muted md:text-base">
                   {prop.body}
                 </p>
               </StaggerChild>

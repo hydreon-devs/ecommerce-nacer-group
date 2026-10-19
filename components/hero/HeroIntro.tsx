@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRightIcon } from "@/components/ui/icons";
 import { FlyingCreatures } from "@/components/decor/FlyingCreatures";
 import { HERO_INTRO } from "@/lib/content/home";
 import { ScrollIndicator } from "./ScrollIndicator";
@@ -38,13 +39,14 @@ export function HeroIntro() {
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3 md:mt-9">
           <Link
             href={HERO_INTRO.primaryCta.href}
-            className="inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 font-body text-sm font-medium text-ink transition-colors duration-200 hover:bg-amber-soft md:px-7"
+            className="inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 font-body text-sm font-medium text-ink transition-colors duration-200 hover:bg-amber-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber md:px-7"
           >
-            {HERO_INTRO.primaryCta.label} →
+            {HERO_INTRO.primaryCta.label}
+            <ChevronRightIcon width={16} height={16} />
           </Link>
           <Link
             href={HERO_INTRO.secondaryCta.href}
-            className="inline-flex items-center gap-2 rounded-full border border-cream/25 px-6 py-3 font-body text-sm text-cream/85 transition-colors duration-200 hover:border-cream/50 hover:text-cream md:px-7"
+            className="inline-flex items-center gap-2 rounded-full border border-cream/25 px-6 py-3 font-body text-sm text-cream/85 transition-colors duration-200 hover:border-cream/50 hover:text-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber md:px-7"
           >
             {HERO_INTRO.secondaryCta.label}
           </Link>
