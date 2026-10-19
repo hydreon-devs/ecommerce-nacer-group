@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/config";
+import { fraunces, manrope } from "@/lib/fonts";
 import "../globals.css";
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
-  display: "swap",
-});
-
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — Nacer Group`,

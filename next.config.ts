@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Dos root layouts (storefront y admin): la 404 de URLs sin ruta vive en
+    // `app/global-not-found.tsx`.
+    globalNotFound: true,
+  },
   images: {
     remotePatterns: [
       {
