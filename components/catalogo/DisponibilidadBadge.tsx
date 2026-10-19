@@ -1,40 +1,35 @@
-import type { Producto } from "@/lib/domain/types";
-import { esVendible } from "@/lib/domain/esVendible";
+import type { Disponibilidad } from "@/lib/domain/types";
 
 interface DisponibilidadBadgeProps {
-  producto: Producto;
+  disponibilidad: Disponibilidad;
 }
 
 /**
- * Refleja `disponibilidad`, nunca `stock` directamente. Un producto
- * `Bajo pedido` se muestra como comprable con su tiempo de preparación — no
- * como agotado — sin importar que `stock` sea 0.
+ * Tono por disponibilidad. El texto siempre lleva la información (el punto es
+ * refuerzo, no el único canal) y todos los pares texto/fondo superan 4.5:1.
  */
-export function DisponibilidadBadge({ producto }: DisponibilidadBadgeProps) {
-  const vendible = esVendible(producto);
+const TONES: Record<Disponibilidad, string> = {
+  Disponible: "bg-moss/12 text-moss-deep",
+  // `Bajo pedido` se vende: tono cálido y activo, nunca el gris de "Agotado".
+  "Bajo pedido": "bg-amber/20 text-ink",
+  Agotado: "bg-ink/8 text-ink-muted",
+};
 
-  if (producto.disponibilidad === "Agotado" || !vendible) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-ink/8 px-3 py-1 font-body text-xs text-ink/60">
-        Agotado
-      </span>
-    );
-  }
-
-  if (producto.disponibilidad === "Bajo pedido") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-amber/15 px-3 py-1 font-body text-xs text-ink">
-        Bajo pedido
-        {producto.tiempoPreparacionDias
-          ? ` · ${producto.tiempoPreparacionDias} días de preparación`
-          : ""}
-      </span>
-    );
-  }
-
+/**
+ * Refleja `disponibilidad`, nunca stock. `Bajo pedido` se muestra como
+ * comprable, no como agotado (hoy la DB no tiene ese estado ni tiempo de
+ * preparación; si aparece, se agrega el dato aquí).
+ */
+export function DisponibilidadBadge({ disponibilidad }: DisponibilidadBadgeProps) {
   return (
-    <span className="inline-flex items-center rounded-full bg-moss/15 px-3 py-1 font-body text-xs text-moss">
-      Disponible
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-body text-xs font-medium whitespace-nowrap ${TONES[disponibilidad]}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`size-1.5 rounded-full bg-current ${disponibilidad === "Agotado" ? "opacity-50" : ""}`}
+      />
+      {disponibilidad}
     </span>
   );
 }
