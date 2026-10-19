@@ -4,8 +4,7 @@ import { getStockItems, type StockItemRow } from "@/lib/data/stock-items";
 
 /**
  * Capa de datos del panel para `products`/`product_variants`. Distinta de
- * `lib/data/products.ts` (mock del storefront de Crisálidas) — no se toca
- * ese archivo, es un contrato aparte documentado en su propia cabecera.
+ * `lib/data/storefront-products.ts` (catálogo público, solo columnas públicas).
  */
 
 export interface VariantRow {

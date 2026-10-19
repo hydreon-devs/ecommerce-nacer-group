@@ -1,55 +1,43 @@
 /**
- * Tipos de dominio para el storefront de Crisálidas y Mariposas.
+ * Tipos de dominio del storefront de Crisálidas y Mariposas.
  *
  * Vocabulario en español porque así vive en `nacer-dominio`: `disponibilidad`,
- * `precio_cop`, `ocasion`, etc. no se traducen. El código que los consume
- * (componentes, hooks) sí está en inglés.
+ * `precio_cop`, etc. no se traducen. El código que los consume (componentes,
+ * hooks) sí está en inglés.
  *
- * Fase 1: no hay Supabase. Estos tipos son el contrato que el mock de
- * `lib/data/products.ts` respeta, y el mismo que usará la tabla `productos`
- * cuando se conecte el backend real.
+ * La forma sale de lo que la base de datos realmente tiene (`products`,
+ * `product_variants`, `product_options`, `v_variant_availability`). Lo que la DB
+ * no modela —ocasiones, agenda, pieza única, tiempo de preparación, descripción
+ * corta/larga— no aparece aquí: se agrega cuando exista el dato, no antes.
+ *
+ * Este es el contrato que cruza a componentes de cliente, así que NO lleva
+ * stock, unidades exactas ni costos: solo lo que la ficha necesita mostrar.
  */
-
-export type Categoria = "Experiencia" | "Artesanía" | "Detalle";
 
 export type Disponibilidad = "Disponible" | "Bajo pedido" | "Agotado";
-
-/**
- * Vocabulario cerrado de ocasiones (`nacer-dominio` §6). No agregar valores
- * sueltos: es la dimensión principal de filtro del catálogo, por encima de
- * categoría, y su valor viene de una tabla `ocasiones` compartida por marca.
- */
-export type Ocasion =
-  | "celebración"
-  | "homenaje"
-  | "regalo"
-  | "familia"
-  | "acompañar"
-  | "recordar"
-  | "condolencias"
-  | "conservación"
-  | "educación"
-  | "naturaleza"
-  | "experiencia"
-  | "decoración"
-  | "agradecer"
-  | "celebrar"
-  | "empresas";
-
-/** Ocasiones que fuerzan el registro sobrio de animación en toda la UI. */
-export const OCASIONES_SOBRIAS: readonly Ocasion[] = [
-  "condolencias",
-  "acompañar",
-  "recordar",
-];
-
-export function esOcasionSobria(ocasiones: Ocasion[]): boolean {
-  return ocasiones.some((o) => OCASIONES_SOBRIAS.includes(o));
-}
 
 export interface ImagenProducto {
   url: string;
   alt: string;
+}
+
+export interface VarianteProducto {
+  id: string;
+  sku: string;
+  /** Texto para el selector, derivado de `attributes` (p. ej. "Azul", "50 mariposas"). */
+  etiqueta: string;
+  /** Precio final de la variante: `base_price + price_delta`, en COP enteros. */
+  precioCop: number;
+  /** Hay al menos una unidad vendible según `v_variant_availability`. */
+  vendible: boolean;
+  imagenUrl: string | null;
+}
+
+export interface AdicionalProducto {
+  id: string;
+  nombre: string;
+  precioCop: number;
+  maxCantidad: number;
 }
 
 export interface Producto {
@@ -57,17 +45,24 @@ export interface Producto {
   sku: string;
   slug: string;
   nombre: string;
-  categoria: Categoria;
-  descripcionCorta: string;
-  descripcionLarga: string;
-  precioCop: number;
+  /** Colección de Crisálidas, o "Complementos" para esa línea. */
+  coleccion: string;
+  coleccionSlug: string;
+  descripcion: string | null;
+  simbolismo: string | null;
+  /** Precio de la variante más barata. Ver `tienePreciosVariables`. */
+  precioDesdeCop: number;
+  tienePreciosVariables: boolean;
   disponibilidad: Disponibilidad;
-  stock: number;
-  tiempoPreparacionDias?: number;
-  requiereAgenda: boolean;
-  esPiezaUnica: boolean;
-  activo: boolean;
-  ocasiones: Ocasion[];
-  /** Galería ordenada; la primera imagen es la portada del producto. */
+  variantes: VarianteProducto[];
+  adicionales: AdicionalProducto[];
+  /** Galería ordenada; vacía si el producto no tiene imágenes. */
   imagenes: ImagenProducto[];
+  /** ISO; solo para ordenar destacados. */
+  creadoEn: string;
+}
+
+export interface ColeccionFiltro {
+  slug: string;
+  nombre: string;
 }

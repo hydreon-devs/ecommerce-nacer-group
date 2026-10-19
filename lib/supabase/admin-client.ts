@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { fetchWithJwtSkewRetry } from "./fetchWithJwtSkewRetry";
 
 /**
  * Cliente con la llave `service_role`: se salta RLS por completo (spec 001
@@ -20,5 +21,6 @@ export function createAdminClient() {
 
   return createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: fetchWithJwtSkewRetry },
   });
 }
