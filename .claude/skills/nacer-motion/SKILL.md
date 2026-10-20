@@ -16,6 +16,7 @@ ficha equivocada es un error de producto, no de estilo.
 | Hero de portada | Entrada escalonada de texto e imagen | Alta |
 | Decoración ambiental (hero) | Criaturas volando en CSS puro (`@keyframes`, no Framer Motion) flanqueando el texto — nunca sobre él | Baja |
 | Hilo del recorrido (Home) | Trazo continuo que se rellena con el scroll y una mariposa que lo recorre. El relleno anima `stroke-dashoffset` (excepción a §2.5, ver abajo); la mariposa se mueve solo con `transform`. Se atenúa sobre las secciones sobrias y desaparece al terminarlas | Media |
+| Ocasiones (Home) | Marquee infinito de polaroids inclinadas: bucle CSS lineal (`@keyframes` con `translateX`, no Framer Motion), de ambiente y por eso fuera de la ventana de 150-400 ms. Se pausa con el puntero sobre una tarjeta, con el foco dentro y con un botón pausa/reanudar (WCAG 2.2.2). En hover cada tarjeta se endereza, sube y escala con resorte (`rotate: 0, y: -18, scale: 1.04`, 350 ms). Con reduced motion: sin marquee ni botón, fila estática con scroll nativo | Media |
 | Tarjetas de producto | Elevación y escala sutil en hover | Alta |
 | Carrito | Panel lateral con deslizamiento + confirmación al agregar | Alta |
 | Estados de carga | Skeletons con pulso | Alta |
@@ -47,7 +48,9 @@ Fuera de esta lista, no animar. Si aparece una zona nueva, se agrega aquí prime
    espacio de usuario, así que sobre un SVG estirado el relleno sale a parches.
 6. **El tono se ajusta a la ocasión.** Las fichas etiquetadas `condolencias`, `acompañar` o
    `recordar` usan el registro más sobrio del sistema: fundido simple, sin rebote, sin
-   escala. Ningún `type: "spring"` con `bounce` en esas vistas.
+   escala. Ningún `type: "spring"` con `bounce` en esas vistas. La regla aplica a las vistas de
+   producto y fichas con esas etiquetas, no a índices mixtos de ocasiones como la sección
+   de ocasiones del Home.
 
 ## 3. Reduced motion
 
