@@ -1,3 +1,4 @@
+import { BrandsSection } from "@/components/home/BrandsSection";
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel";
 import { NarrativeSection } from "@/components/home/NarrativeSection";
 import { Recorrido } from "@/components/home/Recorrido";
@@ -19,7 +20,7 @@ import { getFeaturedProducts } from "@/lib/data/storefront-products";
  * anidamiento es también lo que permite que el intro y la banda de video
  * compartan exactamente el mismo color de fondo, sin costura entre los dos.
  *
- * Orden: intro + banda de video (zona oscura) → destacados → propuesta de
+ * Orden: intro + banda de video (zona oscura) → nuestras marcas → destacados → propuesta de
  * valor → recorrido con el hilo → cifras → cierre. Todo lo que sigue al hero va
  * sobre fondo claro.
  *
@@ -42,6 +43,8 @@ export default async function Home() {
       <HeroSection>
         <HeroIntro />
       </HeroSection>
+
+      <BrandsSection />
 
       <FeaturedCarousel productos={destacados} />
 
