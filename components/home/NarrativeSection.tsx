@@ -114,10 +114,23 @@ export function NarrativeSection({ section }: { section: HomeSection }) {
   );
 }
 
+/** Proporción del isotipo vectorizado (`viewBox` 2240 × 2456). */
+const ISOTIPO_WIDTH = 2240;
+const ISOTIPO_HEIGHT = 2456;
+
 /**
  * Bloque de texto sin imagen. `stagger-up` es el único `type` que escalona sus
  * hijos, así que es el único que los envuelve en `StaggerChild`; el resto
  * anima el bloque entero de una sola vez.
+ *
+ * El isotipo va detrás como marca de agua: estático, decorativo (`alt=""`) y
+ * a 8 % de opacidad para no competir con el titular ni con el botón. Vive en
+ * el contenedor y no dentro de `RevealSection` para que no entre animado con
+ * el texto. `isolate` acota el `-z-10` a esta sección; `overflow-hidden`
+ * recorta el sobrante del `h-[115%]`.
+ *
+ * El bloque va a `max-w-4xl` para que el titular respire en una o dos líneas,
+ * pero el párrafo se queda en `max-w-2xl`: más ancho que eso pierde lectura.
  */
 function CenteredSection({ section }: { section: HomeSection }) {
   const staggered = section.type === "stagger-up";
@@ -129,7 +142,7 @@ function CenteredSection({ section }: { section: HomeSection }) {
     </h2>
   );
   const body = (
-    <p className="font-body mt-6 text-base text-ink/75 md:text-lg">
+    <p className="font-body mx-auto mt-6 max-w-2xl text-base text-ink/75 md:text-lg">
       {section.body}
     </p>
   );
@@ -148,37 +161,48 @@ function CenteredSection({ section }: { section: HomeSection }) {
   );
 
   return (
-    <RevealSection
-      type={section.type}
-      align={section.align}
-      sober={section.sober}
-      className="mx-auto max-w-xl px-6 py-24 md:px-16 md:py-32"
-    >
-      {staggered ? (
-        <>
-          <StaggerChild>{label}</StaggerChild>
-          <StaggerChild
-            as="h2"
-            className="font-display mt-4 text-4xl leading-tight text-ink md:text-6xl"
-          >
-            {section.title}
-          </StaggerChild>
-          <StaggerChild
-            as="p"
-            className="font-body mt-6 text-base text-ink/75 md:text-lg"
-          >
-            {section.body}
-          </StaggerChild>
-          {cta && <StaggerChild>{cta}</StaggerChild>}
-        </>
-      ) : (
-        <>
-          {label}
-          {title}
-          {body}
-          {cta}
-        </>
-      )}
-    </RevealSection>
+    <div className="relative isolate overflow-hidden">
+      <Image
+        src="/brand/isotipo-crisalidas.svg"
+        alt=""
+        aria-hidden="true"
+        width={ISOTIPO_WIDTH}
+        height={ISOTIPO_HEIGHT}
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[115%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 select-none opacity-[0.08]"
+      />
+
+      <RevealSection
+        type={section.type}
+        align={section.align}
+        sober={section.sober}
+        className="max-w-4xl px-6 py-24 md:px-16 md:py-32"
+      >
+        {staggered ? (
+          <>
+            <StaggerChild>{label}</StaggerChild>
+            <StaggerChild
+              as="h2"
+              className="font-display mt-4 text-4xl leading-tight text-ink md:text-6xl"
+            >
+              {section.title}
+            </StaggerChild>
+            <StaggerChild
+              as="p"
+              className="font-body mx-auto mt-6 max-w-2xl text-base text-ink/75 md:text-lg"
+            >
+              {section.body}
+            </StaggerChild>
+            {cta && <StaggerChild>{cta}</StaggerChild>}
+          </>
+        ) : (
+          <>
+            {label}
+            {title}
+            {body}
+            {cta}
+          </>
+        )}
+      </RevealSection>
+    </div>
   );
 }
