@@ -225,3 +225,27 @@ function assertNoConsecutiveRepeats(sections: HomeSection[]): void {
 }
 
 assertNoConsecutiveRepeats(HOME_SECTIONS);
+
+export interface Occasion {
+  id: string;
+  name: string;
+  /** Inclinación en reposo, en grados. Fija (nunca aleatoria: rompería la hidratación). */
+  tilt: number;
+}
+
+/**
+ * Ocasiones para las que se compra en Crisálidas, en el orden en que se
+ * muestran. Las inclinaciones están dentro de ±6° y difieren entre vecinas.
+ * Todavía no enlazan al catálogo: la base no tiene datos de ocasiones.
+ */
+export const OCCASIONS: Occasion[] = [
+  { id: "cumpleanos", name: "Cumpleaños", tilt: -6 },
+  { id: "aniversario", name: "Aniversario", tilt: 5 },
+  { id: "boda", name: "Boda", tilt: -3 },
+  { id: "condolencias", name: "Condolencias", tilt: 4 },
+  { id: "grados", name: "Grados", tilt: -5 },
+  { id: "nacimiento-bautizo", name: "Nacimiento o bautizo", tilt: 6 },
+  { id: "recuperacion", name: "Recuperación", tilt: -4 },
+  { id: "felicitaciones", name: "Felicitaciones", tilt: 3 },
+  { id: "fecha-especial", name: "Fecha especial", tilt: -1 },
+];
