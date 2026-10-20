@@ -44,6 +44,18 @@ export const ChevronRightIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const PauseIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 6v12M15 6v12" />
+  </Icon>
+);
+
+export const PlayIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8 5.5v13l10-6.5z" />
+  </Icon>
+);
+
 export const ZoomIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="11" cy="11" r="6" />
