@@ -9,10 +9,11 @@ puede violar nunca.
 |---|---|
 | Crisálidas y Mariposas | **Vende.** Catálogo, carrito, checkout. Incluye la línea **Complementos**. |
 | Florea | **NO vende.** Solo sección informativa con enlace al sitio externo. |
+| Jagua | **NO vende como marca.** Solo presentación institucional (sin sitio propio). Sus productos se venden dentro de Crisálidas como **Complementos**. |
 
 En `products.brand` solo existen `crisalidas` (SKU `CRI-`, agrupados por colección) y
-`complementos` (SKU `COM-`, sin colección). Jagua salió del negocio y sus productos
-pasaron a Complementos: no volver a agregarla.
+`complementos` (SKU `COM-`, sin colección). Jagua es marca de Nacer Group pero no
+existe como `brand` en datos: sus productos son Complementos. No crear `brand = jagua`.
 
 Florea no tiene productos, precios, stock ni carrito en el sitio. Es una sección de
 marca con un enlace saliente. La integración de venta es futura y sin fecha: se
