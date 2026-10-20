@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+} from "framer-motion";
 import { DURATION_UI, EASE_UI } from "@/components/motion/variants";
 import { Logo } from "@/components/ui/Logo";
 import { SITE_NAME } from "@/lib/config";
@@ -11,7 +16,7 @@ import { buildWhatsAppUrl, WHATSAPP_GENERAL_MESSAGE } from "@/lib/whatsapp";
 
 /** Altura aproximada del pill flotante; margen para que el cambio de variante
  * ocurra justo antes de que el header pise fondo claro. */
-const HEADER_CLEARANCE = 88;
+const HEADER_CLEARANCE = 100;
 
 /** Por encima de este scroll el header siempre se ve (arranque de la página). */
 const ALWAYS_VISIBLE_UNTIL = HEADER_CLEARANCE;
@@ -98,7 +103,8 @@ export function SiteHeader() {
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const delta = latest - (scrollY.getPrevious() ?? latest);
-    if (latest < ALWAYS_VISIBLE_UNTIL || delta < -SCROLL_DELTA) setHidden(false);
+    if (latest < ALWAYS_VISIBLE_UNTIL || delta < -SCROLL_DELTA)
+      setHidden(false);
     else if (delta > SCROLL_DELTA && !menuOpen) setHidden(true);
 
     const heroHeight = heroHeightRef.current;
@@ -151,7 +157,7 @@ export function SiteHeader() {
       )}
 
       <div
-        className={`relative mt-4 flex items-center gap-3 rounded-full px-4 py-2.5 transition-colors duration-300 md:mt-6 md:gap-5 md:px-6 md:py-3 ${
+        className={`relative mt-4 flex items-center gap-3 rounded-full py-1.5 pl-3 pr-4 transition-colors duration-300 md:mt-6 md:gap-5 md:py-2 md:pl-4 md:pr-6 ${
           solid
             ? "bg-cream/90 text-ink shadow-sm shadow-ink/5 backdrop-blur-md"
             : "bg-black/10 text-cream backdrop-blur-sm"
@@ -174,7 +180,10 @@ export function SiteHeader() {
         />
 
         {/* Nav completo desde md. Debajo, solo el ítem destacado + el menú. */}
-        <nav aria-label="Principal" className="flex items-center gap-3 md:gap-5">
+        <nav
+          aria-label="Principal"
+          className="flex items-center gap-3 md:gap-5"
+        >
           {NAV_ITEMS.map((item) =>
             item.featured ? (
               <Link
