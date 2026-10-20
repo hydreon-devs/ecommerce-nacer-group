@@ -108,6 +108,39 @@ html {
   }
 }
 
+/* Marquee de ocasiones (Home). Solo `transform`. Las dos copias de la lista
+   van en un mismo track, así que -50% cae exactamente donde empieza la copia. */
+@keyframes occasions-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.occasions-track {
+  animation: occasions-marquee var(--marquee-duration, 50s) linear infinite;
+}
+
+.occasions-track[data-paused="true"],
+.occasions-track:has(li:hover),
+.occasions-rail:focus-within .occasions-track {
+  animation-play-state: paused;
+}
+
+/* `MotionConfig` no detiene bucles CSS: con reduced motion no hay marquee ni
+   botón, y queda la fila estática con scroll nativo (una sola copia). */
+@media (prefers-reduced-motion: reduce) {
+  .occasions-track {
+    animation: none;
+  }
+  .occasions-copy,
+  .occasions-toggle {
+    display: none;
+  }
+}
+
 body {
   background: var(--color-cream);
   color: var(--color-ink);

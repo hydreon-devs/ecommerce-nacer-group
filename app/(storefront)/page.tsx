@@ -1,6 +1,7 @@
 import { BrandsSection } from "@/components/home/BrandsSection";
 import { FeaturedCarousel } from "@/components/home/FeaturedCarousel";
 import { NarrativeSection } from "@/components/home/NarrativeSection";
+import { OccasionsSection } from "@/components/home/OccasionsSection";
 import { Recorrido } from "@/components/home/Recorrido";
 import { TrustPrinciples } from "@/components/home/TrustPrinciples";
 import { ValueProps } from "@/components/home/ValueProps";
@@ -21,7 +22,7 @@ import { getFeaturedProducts } from "@/lib/data/storefront-products";
  * compartan exactamente el mismo color de fondo, sin costura entre los dos.
  *
  * Orden: intro + banda de video (zona oscura) → nuestras marcas → destacados → propuesta de
- * valor → recorrido con el hilo → cifras → cierre. Todo lo que sigue al hero va
+ * valor → ocasiones → recorrido con el hilo → cifras → cierre. Todo lo que sigue al hero va
  * sobre fondo claro.
  *
  * Los destacados van pegados al video a propósito: son el único bloque del
@@ -49,6 +50,8 @@ export default async function Home() {
       <FeaturedCarousel productos={destacados} />
 
       <ValueProps />
+
+      <OccasionsSection />
 
       <Recorrido sections={recorrido} />
 
