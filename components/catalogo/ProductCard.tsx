@@ -8,6 +8,7 @@ import { formatCop } from "@/lib/format";
 import { cardHover, DURATION_UI, DURATION_UI_FAST, EASE_UI } from "@/components/motion/variants";
 import { DisponibilidadBadge } from "./DisponibilidadBadge";
 import { ImagePlaceholder } from "./ImagePlaceholder";
+import { QuickAdd } from "./QuickAdd";
 
 interface ProductCardProps {
   producto: Producto;
@@ -27,7 +28,8 @@ interface ProductCardProps {
  * el padre) permiten que `AnimatePresence` reordene sin remount al filtrar
  * por colección.
  *
- * Superficie: la tarjeta tiene `p-2` y la imagen `rounded-xl` (12px), así que
+ * Superficie: la tarjeta tiene `p-2` (el enlace usa `m-2` y la fila de acción `px-2 pb-2`) y la
+ * imagen `rounded-xl` (12px), así que
  * el radio exterior es 12 + 8 = 20px (concentric radii). El contorno es una
  * sombra en capas, no un borde; el `border` transparente es para forced-colors.
  *
@@ -52,17 +54,20 @@ export function ProductCard({ producto, animated = false, priority = false }: Pr
         initial="rest"
         whileHover="hover"
         variants={cardHover}
-        className="h-full rounded-[20px] border border-transparent bg-cream-soft/40 shadow-card transition-shadow duration-200 ease-out hover:shadow-card-hover motion-reduce:transition-none"
+        className="flex h-full flex-col rounded-[20px] border border-transparent bg-cream-soft/40 shadow-card transition-shadow duration-200 ease-out hover:shadow-card-hover motion-reduce:transition-none"
       >
         <Link
           href={`/catalogo/${producto.slug}`}
-          className="flex h-full flex-col rounded-[20px] p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+          className="m-2 mb-0 flex flex-1 flex-col rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
         >
           {/* Vertical y `object-contain`: las fotos reales son piezas altas sobre
               fondo blanco; con `object-cover` en 4:3 se cortaban por arriba.
               El contorno `outline-black/10` define el borde de la foto blanca
               sobre el fondo crema sin alterar su tamaño. */}
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-white">
+          <div
+            data-cart-source="card"
+            className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-white"
+          >
             {portada ? (
               <Image
                 src={portada.url}
@@ -100,6 +105,11 @@ export function ProductCard({ producto, animated = false, priority = false }: Pr
             </div>
           </div>
         </Link>
+        {/* Fuera del enlace: un botón dentro de `<a>` es HTML inválido y
+            navegaría al pulsarlo. Sigue dentro de la tarjeta, bajo el `p-2`. */}
+        <div className="px-2 pb-2">
+          <QuickAdd producto={producto} />
+        </div>
       </motion.article>
     </motion.div>
   );

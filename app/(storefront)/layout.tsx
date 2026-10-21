@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/config";
 import { fraunces, manrope } from "@/lib/fonts";
@@ -18,8 +19,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-cream text-ink">
         <MotionConfig reducedMotion="user">
-          <SiteHeader />
-          {children}
+          <CartProvider>
+            <SiteHeader />
+            {children}
+          </CartProvider>
         </MotionConfig>
       </body>
     </html>

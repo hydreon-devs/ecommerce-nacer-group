@@ -68,3 +68,22 @@ export const ChatIcon = (props: IconProps) => (
     <path d="M5 18.5V6.5A1.5 1.5 0 0 1 6.5 5h11A1.5 1.5 0 0 1 19 6.5v8a1.5 1.5 0 0 1-1.5 1.5H9.5L5 18.5z" />
   </Icon>
 );
+
+export const CartIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M6 8h12l-1 11H7L6 8z" />
+    <path d="M9 8V7a3 3 0 0 1 6 0v1" />
+  </Icon>
+);
+
+export const PlusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const MinusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M5 12h14" />
+  </Icon>
+);

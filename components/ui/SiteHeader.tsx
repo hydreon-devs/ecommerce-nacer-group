@@ -9,6 +9,9 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
+import { HeaderCartButton } from "@/components/cart/HeaderCartButton";
+import { useHeaderVisibility } from "@/components/cart/HeaderVisibility";
+import { useCart } from "@/components/cart/CartProvider";
 import { DURATION_UI, EASE_UI } from "@/components/motion/variants";
 import { Logo } from "@/components/ui/Logo";
 import { SITE_NAME } from "@/lib/config";
@@ -68,11 +71,13 @@ const WHATSAPP_HREF = buildWhatsAppUrl(WHATSAPP_GENERAL_MESSAGE);
  */
 export function SiteHeader() {
   const pathname = usePathname();
+  const { openDrawer } = useCart();
   const { scrollY } = useScroll();
   const heroHeightRef = useRef<number | null>(null);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  // Shared with the floating cart pill, which appears while this is hidden.
+  const { hidden, setHidden } = useHeaderVisibility();
 
   // Home es la única ruta con zona de hero. Se deriva del pathname y no de la
   // medición para que el servidor y el primer render de cliente coincidan: si
@@ -230,6 +235,14 @@ export function SiteHeader() {
           <ChatIcon />
           Contacto
         </a>
+
+        <HeaderCartButton
+          solid={solid}
+          onOpen={() => {
+            closeMenu();
+            openDrawer();
+          }}
+        />
 
         <button
           type="button"

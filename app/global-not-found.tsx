@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { NotFoundView } from "@/components/ui/NotFoundView";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { fraunces, manrope } from "@/lib/fonts";
@@ -24,8 +25,10 @@ export default function GlobalNotFound() {
     >
       <body className="min-h-full flex flex-col bg-cream text-ink">
         <MotionConfig reducedMotion="user">
-          <SiteHeader />
-          <NotFoundView />
+          <CartProvider>
+            <SiteHeader />
+            <NotFoundView />
+          </CartProvider>
         </MotionConfig>
       </body>
     </html>

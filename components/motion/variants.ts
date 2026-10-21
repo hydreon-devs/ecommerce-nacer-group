@@ -207,3 +207,23 @@ export const pageTransition: Variants = {
     transition: { duration: DURATION_UI, ease: EASE_UI },
   },
 };
+
+// ---- Feedback al agregar al carrito (150-400ms) ----------------------------
+
+/** Vuelo del fantasma de producto hacia el botón del carrito. */
+export const ADD_FLIGHT_DURATION = 0.38;
+/** Anillo que se expande desde el botón al recibir el golpe. */
+export const ADD_RING_DURATION = 0.3;
+/** `visualDuration` del resorte del botón/insignia (techo 400ms). */
+export const ADD_BUMP_VISUAL_DURATION = 0.35;
+/** Vuelos simultáneos máximos; el resto solo golpea el botón. */
+export const ADD_MAX_GHOSTS = 3;
+/** Empuje inicial del botón en píxeles, en la dirección del vuelo. */
+export const ADD_BUMP_PX = 5;
+/** Entrada/salida de la píldora flotante del carrito. */
+export const CART_PILL_DURATION = 0.2;
+/**
+ * Tiempo que el feedback espera a que la píldora monte y asiente antes de
+ * medirla (primer ítem agregado con el header oculto). Derivado de la duración.
+ */
+export const CART_PILL_SETTLE_MS = CART_PILL_DURATION * 1000;

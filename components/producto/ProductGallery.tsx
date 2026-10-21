@@ -44,6 +44,7 @@ export function ProductGallery({ producto }: ProductGalleryProps) {
     <div className="flex flex-col gap-3">
       <button
         type="button"
+        data-cart-source="gallery"
         onClick={() => setExpanded(active)}
         aria-label={`Ampliar ${activeImage.alt}`}
         className="group relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-white [-webkit-tap-highlight-color:transparent] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
