@@ -9,7 +9,7 @@ interface ComingSoonProps {
 
 /**
  * Vista mínima para rutas de contenido de marca que todavía no existen
- * (`/nosotros`, `/marca`).
+ * (`/marca`).
  *
  * Existe por una razón concreta: el nav del header las enlaza, y un enlace del
  * nav no puede llevar a un 404. NO es contenido definitivo — cuando se escriba

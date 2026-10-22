@@ -8,6 +8,8 @@ const LOGO_HEIGHT = 1472;
 interface LogoProps {
   /** Clases de la imagen. El alto manda; el ancho sale de la proporción. */
   className?: string;
+  /** `false` en instancias bajo el pliegue (footer): no compite con el LCP. */
+  priority?: boolean;
 }
 
 /**
@@ -23,16 +25,20 @@ interface LogoProps {
  * oscuro también funciona sin variante propia.
  *
  * `next/image` sirve los `.svg` sin optimizar automáticamente; no hace falta
- * `dangerouslyAllowSVG`. `priority` porque vive en el header, siempre arriba.
+ * `dangerouslyAllowSVG`. `priority` por defecto porque el header vive siempre
+ * arriba; el footer lo apaga para no precargar una imagen bajo el pliegue.
  */
-export function Logo({ className = "h-11 w-auto md:h-14" }: LogoProps) {
+export function Logo({
+  className = "h-11 w-auto md:h-14",
+  priority = true,
+}: LogoProps) {
   return (
     <Image
       src="/brand/logo-crisalidas.svg"
       alt={SITE_NAME}
       width={LOGO_WIDTH}
       height={LOGO_HEIGHT}
-      priority
+      priority={priority}
       className={className}
     />
   );

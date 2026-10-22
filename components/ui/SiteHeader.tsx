@@ -36,13 +36,14 @@ interface NavItem {
 
 /**
  * `Catálogo` va primero y destacado a propósito: es la única ruta de este nav
- * que lleva a comprar. `Nosotros` y `Crisálidas y Mariposas` son páginas de
- * marca todavía en preparación (ver `app/nosotros` y `app/marca`) — existen
- * como rutas reales para que el nav no lleve a un 404.
+ * que lleva a comprar. `Nosotros` apunta a `/about-us`, la ruta canónica
+ * heredada del sitio anterior (`/nosotros` redirige ahí, ver `next.config.ts`).
+ * `Crisálidas y Mariposas` es una página de marca todavía en preparación (ver
+ * `app/marca`) — existe como ruta real para que el nav no lleve a un 404.
  */
 const NAV_ITEMS: NavItem[] = [
   { href: "/catalogo", label: "Catálogo", featured: true },
-  { href: "/nosotros", label: "Nosotros" },
+  { href: "/about-us", label: "Nosotros" },
   { href: "/marca", label: "Crisálidas y Mariposas" },
 ];
 

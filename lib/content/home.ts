@@ -10,7 +10,7 @@ export const HERO_INTRO = {
   title: "Un regalo único, innovador y sostenible. Genera experiencias inolvidables",
   body: "Liberaciones guiadas, cerámica torneada a mano y detalles para acompañar. Elige por el momento que estás viviendo, y vive una experiencia única que siempre recordarás.",
   primaryCta: { label: "Ver catálogo", href: "/catalogo" },
-  secondaryCta: { label: "Conoce el taller", href: "/nosotros" },
+  secondaryCta: { label: "Conoce el taller", href: "/about-us" },
 } as const;
 
 export interface ValueProp {
