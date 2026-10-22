@@ -46,12 +46,56 @@ Product page ──add──▶ Cart ──▶ 1. Delivery ──▶ 2. Your det
 | # | Slice | Pure logic under test (`lib/domain/*.test.ts`, `node --test`) |
 |---|---|---|
 | 1 | **Cart** — add-to-cart replaces `WhatsAppCTA`; cart drawer/page; persisted in `localStorage` | line identity (variant + adicionales), add/merge, quantity bounds, adicionales `maxCantidad`, remove, subtotal in integer COP, `esVendible` gate, safe deserialization of stored state |
-| 2 | **Delivery step** | delivery-mode resolution for mixed carts (physical → address, agendable → date), delivery-date validation, address confirmation state |
+| 2 | **Delivery step** — `/checkout` step 1; see "Slice 2 detail" | availability re-check of cart lines, delivery calendar, Distance Matrix response parsing, delivery step schema |
 | 3 | **Details step** | form schema (Zod) for the spec 015 fields, conditional invoice fields, phone formats |
 | 4 | **Order creation** (server action + RPC `create_web_order`) | server-side re-pricing, total = subtotal + delivery fee, rejection of tampered or unsellable lines |
 | 5 | **Mercado Pago preference** | preference payload: `external_reference = order_id`, excluded cash payment types, `notification_url` = n8n, back URLs, expiry aligned with the reservation |
 | 6 | **Order detail page** | view model from order + reservations + payment state (`pendiente`, `en_proceso`, `aprobado`, `rechazado`) |
 | 7 | **n8n check** | verify the n8n webhook relies only on `external_reference`; no web-specific branch |
+
+## Stock: when it is held
+
+Adding to the cart holds **nothing**. The cart lives only in the browser, and
+holding stock per cart would let abandoned carts block unique pieces. Stock is
+protected in three layers:
+
+1. **Entering `/checkout`**: a non-reserving availability re-check, using fresh
+   data and not the 5-minute catalog cache. Lines that became unsellable are
+   flagged before the customer fills anything in.
+2. **Summary → Pay (slice 4)**: `reserve_variant` per line. A failure is shown
+   per product before any charge.
+3. **Payment**: the MP preference `date_of_expiration` equals the reservation
+   expiry, and `confirm_order` refuses expired reservations or short stock.
+   Residual case: a PSE approved after expiry. n8n must alert the operator
+   (slice 7). `Bajo pedido` lines consume no stock.
+
+## Slice 2 detail
+
+- **Earliest date: tomorrow.** The calendar runs from tomorrow up to 60 days,
+  skipping days without `business_hours` and `holidays`, in `America/Bogota`.
+  The server re-validates with `is_delivery_date` at order creation.
+- **Methods**: `tienda` (pickup at the workshop, fee 0, date only) or
+  `domicilio` (address, municipality of the metropolitan area, neighborhood,
+  optional apartment/tower, date).
+- **Address v1**: free text plus municipality, like n8n. No Places
+  autocomplete, which can be added later without rework.
+  - The server calls Google Distance Matrix from the workshop origin
+    (`Cl. 35cc #8951, La América, Medellín, Antioquia, Colombia`, `driving`,
+    `region=co`).
+  - It parses the response with the same validations as n8n (spec 006).
+  - The fee is computed by `quote_delivery` in the DB; tariff tiers are never
+    duplicated in TS.
+- **Confirmation**: the customer sees Google's resolved address and a static map
+  and answers "¿Es aquí donde entregamos?". They cannot continue without
+  confirming.
+- **Ports and adapters**: a `DistanceProvider` port, with a Google adapter and a
+  fake for tests.
+- **Display only**: the fee shown here is display only. Slice 4 re-computes the
+  distance and the fee server-side.
+- **State**: checkout progress lives in `sessionStorage` and is never a source of
+  truth.
+- **Domain gap**: neither the schema nor `Producto` models `requiere_agenda` or
+  preparation time, so there is no agenda path for now.
 
 ## Open decisions (`TODO(decisión)`)
 
