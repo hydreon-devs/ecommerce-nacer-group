@@ -53,6 +53,16 @@ export default async function OrderDetailPage({
           <p className="text-sm text-admin-ink-muted">{view.dateLine}</p>
         </div>
         <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          {view.channelMarker ? (
+            <div className="flex items-center gap-2">
+              <dt className="text-xs text-admin-ink-muted">Canal</dt>
+              <dd>
+                <span className="inline-block rounded-full bg-admin-surface-sunken px-2.5 py-0.5 text-xs font-semibold text-admin-ink-secondary">
+                  {view.channelMarker}
+                </span>
+              </dd>
+            </div>
+          ) : null}
           {view.strip.map((key) => {
             switch (key) {
               case "state":

@@ -7,6 +7,7 @@ import {
   orderDate,
 } from "../../../../../lib/domain/orderState.ts";
 import { RESOLUTION_LABELS, type LostResolution } from "../../../../../lib/domain/lostFollowUp.ts";
+import { hasSyntheticChat, orderChannel } from "../../../../../lib/domain/orderChannel.ts";
 import { isPanelChat } from "../../../../../lib/domain/panelSale.ts";
 import { DASH, formatDate, text } from "../orderView.ts";
 
@@ -54,6 +55,8 @@ export interface OrderDetailView {
   invoiceStatus: StatusIndicator;
   /** Plain label and value, not a status: who sold the order. */
   seller: DetailField;
+  /** "Web" for orders created by the storefront checkout; null for the rest. */
+  channelMarker: string | null;
   /** Header strip items in reading order; statuses first, seller last. */
   strip: readonly StripKey[];
   /** The post-sale form (`sale_details`) has been submitted. */
@@ -178,7 +181,7 @@ export function buildOrderDetailView(order: OrderDetail): OrderDetailView {
   const chatId = present(order.chat_id);
   // Los pedidos del panel traen un `chat_id` sintético: el celular real vive en sale_details.
   const contact: DetailField = { label: "WhatsApp", value: text(chatId), mono: true };
-  if (isPanelChat(order.chat_id)) {
+  if (hasSyntheticChat(order.chat_id)) {
     const phone = present(order.saleDetails?.buyer_phone)?.trim() ?? null;
     contact.label = "Celular";
     contact.value = text(phone);
@@ -215,6 +218,7 @@ export function buildOrderDetailView(order: OrderDetail): OrderDetailView {
         invoice === "requested" ? "bg-admin-series-blue/15 text-admin-series-blue" : NEUTRAL_PILL,
     },
     seller: { label: "Vendedor", value: text(present(order.advisor_name)?.trim()) },
+    channelMarker: orderChannel(order.chat_id) === "web" ? "Web" : null,
     strip: STRIP,
     submitted,
     waitingForCustomer: order.status === "pagado" && !submitted,

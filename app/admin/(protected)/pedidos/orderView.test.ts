@@ -178,6 +178,31 @@ describe("buildOrderView groups", () => {
   });
 });
 
+describe("web orders", () => {
+  function webOrder() {
+    const order = makeOrder({ chat_id: "web:6f1c2b7e-1111-4222-8333-444455556666" });
+    order.saleDetails = { ...order.saleDetails!, buyer_phone: "573009998877" };
+    return order;
+  }
+
+  it("shows the buyer phone from sale_details instead of the synthetic chat id", () => {
+    assert.equal(valueOf(webOrder(), "buyerPhone"), "573009998877");
+    assert.equal(buildOrderView(webOrder()).row.buyerLabel, "Ana Pérez");
+  });
+
+  it("never shows the synthetic id when there are no sale details", () => {
+    const order = makeOrder({ chat_id: "web:abc", saleDetails: null });
+    assert.equal(valueOf(order, "buyerPhone"), DASH);
+    assert.equal(buildOrderView(order).row.buyerLabel, DASH);
+  });
+
+  it("marks the row with the Web channel; other channels carry no marker", () => {
+    assert.equal(buildOrderView(webOrder()).row.channelMarker, "Web");
+    assert.equal(buildOrderView(makeOrder()).row.channelMarker, null);
+    assert.equal(buildOrderView(makeOrder({ chat_id: "panel:0f0e" })).row.channelMarker, null);
+  });
+});
+
 describe("panel orders", () => {
   function panelOrder() {
     const order = makeOrder({ chat_id: "panel:0f0e-uuid", deliveryZone: 2 });

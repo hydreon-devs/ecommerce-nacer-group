@@ -94,6 +94,37 @@ describe("panel orders", () => {
   });
 });
 
+describe("web orders", () => {
+  function webOrder() {
+    return makeOrder({
+      chat_id: "web:6f1c2b7e-1111-4222-8333-444455556666",
+      deliveryZone: null,
+      saleDetails: makeSale({ buyer_phone: "573009998877" }),
+    });
+  }
+
+  it("shows the buyer phone, never the synthetic web id as WhatsApp", () => {
+    const view = buildOrderDetailView(webOrder());
+    const phone = view.buyer.find((f) => f.label === "Celular");
+    assert.equal(phone?.value, "573009998877");
+    assert.equal(phone?.href, "tel:573009998877");
+    assert.ok(!JSON.stringify(view.buyer).includes("web:"));
+    assert.ok(!view.buyer.some((f) => f.label === "WhatsApp"));
+  });
+
+  it("marks the channel as Web; panel and WhatsApp orders carry no marker", () => {
+    assert.equal(buildOrderDetailView(webOrder()).channelMarker, "Web");
+    assert.equal(buildOrderDetailView(makeOrder()).channelMarker, null);
+    assert.equal(buildOrderDetailView(makeOrder({ chat_id: "panel:0f0e" })).channelMarker, null);
+  });
+
+  it("keeps kilometres: the Zona label stays panel-only", () => {
+    const { delivery } = buildOrderDetailView({ ...webOrder(), deliveryZone: 2 });
+    assert.equal(delivery.distanceLabel, "Distancia");
+    assert.equal(delivery.distance, "4 km");
+  });
+});
+
 describe("status indicators", () => {
   it("shows the single derived Estado", () => {
     assert.equal(buildOrderDetailView(makeOrder({ status: "pagado" })).state.value, "En construcción");

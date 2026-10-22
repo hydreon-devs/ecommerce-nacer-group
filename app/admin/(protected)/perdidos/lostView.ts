@@ -1,7 +1,7 @@
 import type { LostOrderRow } from "@/lib/data/orders";
 import { formatCop } from "../../../../lib/format.ts";
 import { formatDeliveryAddress } from "../../../../lib/domain/deliveryAddress.ts";
-import { isPanelChat } from "../../../../lib/domain/panelSale.ts";
+import { hasSyntheticChat } from "../../../../lib/domain/orderChannel.ts";
 import {
   RESOLUTION_LABELS,
   daysSinceLoss,
@@ -59,8 +59,8 @@ export function buildLostCard(order: LostOrderRow, now: Date): LostCard {
     lines: (order.lines ?? []).map((line) => ({ name: text(line.name), sku: text(line.sku), qty: line.qty })),
     total: formatCop(order.grand_total),
     buyerName: text(order.saleDetails?.buyer_name),
-    // Los pedidos del panel traen un `chat_id` sintético: el celular real vive en sale_details.
-    buyerPhone: isPanelChat(order.chat_id) ? text(order.saleDetails?.buyer_phone) : text(order.chat_id),
+    // Los pedidos del panel y de la web traen un `chat_id` sintético: el celular real vive en sale_details.
+    buyerPhone: hasSyntheticChat(order.chat_id) ? text(order.saleDetails?.buyer_phone) : text(order.chat_id),
     recipient: text(sale?.recipient_name),
     recipientPhone: text(sale?.recipient_phone),
     address: formatDeliveryAddress(order.delivery_address, order.saleDetails, DASH),

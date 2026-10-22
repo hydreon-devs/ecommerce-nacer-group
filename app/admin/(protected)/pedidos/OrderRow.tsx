@@ -44,7 +44,14 @@ export function OrderRow({
               <path d="M6 9l6 6 6-6" />
             </svg>
             <span className="flex min-w-0 flex-col">
-              <span className="font-admin-mono text-sm font-semibold text-admin-ink">{row.humanNumber}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-admin-mono text-sm font-semibold text-admin-ink">{row.humanNumber}</span>
+                {row.channelMarker ? (
+                  <span className="rounded-full bg-admin-surface-sunken px-2 py-px text-[0.6875rem] font-semibold text-admin-ink-secondary">
+                    {row.channelMarker}
+                  </span>
+                ) : null}
+              </span>
               <span className="truncate text-xs text-admin-ink-secondary">{row.buyerLabel}</span>
             </span>
           </span>

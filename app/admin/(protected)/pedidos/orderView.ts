@@ -1,6 +1,6 @@
 import type { OrderTableRow } from "@/lib/data/orders";
 import { formatCop } from "../../../../lib/format.ts";
-import { isPanelChat } from "../../../../lib/domain/panelSale.ts";
+import { hasSyntheticChat, orderChannel } from "../../../../lib/domain/orderChannel.ts";
 import { deriveOrderState, type OrderState } from "../../../../lib/domain/orderState.ts";
 
 /**
@@ -32,6 +32,8 @@ export interface OrderRowSummary {
   seller: string;
   /** "Sí" / "No" si pidió factura electrónica; raya mientras no haya respondido el formulario. */
   invoice: string;
+  /** "Web" for orders created by the storefront checkout; null for the rest. */
+  channelMarker: string | null;
   /** Día en que se creó el pedido, no el de entrega. */
   createdDate: string;
   amount: string;
@@ -77,8 +79,8 @@ function invoiceLabel(sale: OrderTableRow["saleDetails"]): string {
 
 export function buildOrderView(order: OrderTableRow): OrderView {
   const sale = order.saleDetails;
-  // Los pedidos del panel traen un `chat_id` sintético: el celular real vive en sale_details.
-  const fromPanel = isPanelChat(order.chat_id);
+  // Los pedidos del panel y de la web traen un `chat_id` sintético: el celular real vive en sale_details.
+  const fromPanel = hasSyntheticChat(order.chat_id);
   const buyerPhone = fromPanel ? text(sale?.buyer_phone) : text(order.chat_id);
 
   return {
@@ -87,6 +89,7 @@ export function buildOrderView(order: OrderTableRow): OrderView {
       humanNumber: order.human_number,
       buyerLabel: sale?.buyer_name || (fromPanel ? DASH : order.chat_id),
       seller: text(order.advisor_name?.trim()),
+      channelMarker: orderChannel(order.chat_id) === "web" ? "Web" : null,
       invoice: invoiceLabel(sale),
       createdDate: formatDate(order.created_at),
       amount: formatCop(order.grand_total),

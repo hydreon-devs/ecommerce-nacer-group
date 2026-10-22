@@ -135,6 +135,14 @@ describe("buildLostCard", () => {
     assert.equal(buildLostCard(panel, NOW).buyerPhone, "3001234567");
   });
 
+  it("uses the buyer phone, not the synthetic id, for web orders", () => {
+    const web = makeOrder({
+      chat_id: "web:6f1c2b7e-1111-4222-8333-444455556666",
+      saleDetails: { ...makeOrder().saleDetails!, buyer_phone: "573001234567" },
+    });
+    assert.equal(buildLostCard(web, NOW).buyerPhone, "573001234567");
+  });
+
   it("builds the resolution of a resolved card", () => {
     const card = buildLostCard(
       makeOrder({
