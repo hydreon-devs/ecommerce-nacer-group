@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { DURATION_UI, DURATION_UI_SLOW, EASE_UI } from "@/components/motion/variants";
 import { CloseIcon } from "@/components/ui/icons";
@@ -133,16 +134,24 @@ export function CartDrawer() {
               <p className="mt-1 font-body text-xs text-ink-muted">
                 El domicilio y el total final se confirman al pagar.
               </p>
-              {/* TODO(slice 2): link to /checkout (delivery step). The route does not
-                  exist yet, so the button stays disabled instead of leading to a 404. */}
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-moss px-6 py-3.5 font-body text-base font-medium text-cream disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Continuar
-              </button>
+              {cart.lines.length === 0 ? (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-moss px-6 py-3.5 font-body text-base font-medium text-cream disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Continuar
+                </button>
+              ) : (
+                <Link
+                  href="/checkout"
+                  onClick={closeDrawer}
+                  className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-moss px-6 py-3.5 font-body text-base font-medium text-cream transition-colors duration-150 hover:bg-moss-deep motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-moss"
+                >
+                  Continuar
+                </Link>
+              )}
               <p className="mt-2 text-center font-body text-xs text-ink-muted">
                 El pago en línea estará disponible muy pronto.
               </p>

@@ -19,6 +19,12 @@ import { createAdminClient } from "@/lib/supabase/admin-client";
  * mapeados, sin unidades exactas.
  */
 
+/** Productos mapeados + unidades vendibles por variante (`available_units`). */
+export interface FreshStorefrontCatalog {
+  products: Producto[];
+  unitsByVariant: Map<string, number>;
+}
+
 const FEATURED_LIMIT = 6;
 const RELATED_LIMIT = 4;
 
@@ -32,41 +38,65 @@ const RELATED_LIMIT = 4;
  * demanda con `revalidateTag("storefront-products")` desde el panel.
  */
 const loadCatalog = unstable_cache(
-  async (): Promise<Producto[]> => {
-    const supabase = createAdminClient();
-
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        "id, sku, name, brand, description, image_url, base_price, category, simbolismo, short_name, created_at, is_published, " +
-          "product_variants(id, sku, attributes, price_delta, image_url, is_active, short_name), " +
-          "product_options(id, name, price, max_qty, is_active)",
-      )
-      .eq("is_published", true)
-      .in("brand", ["crisalidas", "complementos"]);
-    if (error) throw error;
-
-    const rows = (data ?? []) as unknown as StorefrontProductRow[];
-    if (rows.length === 0) return [];
-
-    const { data: avail, error: availError } = await supabase
-      .from("v_variant_availability")
-      .select("variant_id, available_units")
-      .in(
-        "product_id",
-        rows.map((r) => r.id),
-      );
-    if (availError) throw availError;
-
-    const unitsByVariant = new Map<string, number>(
-      (avail ?? []).map((a) => [a.variant_id as string, Number(a.available_units)]),
-    );
-
-    return mapStorefrontProducts(rows, unitsByVariant);
-  },
+  async (): Promise<Producto[]> => (await queryCatalog()).products,
   ["storefront-products"],
   { revalidate: 300, tags: ["storefront-products"] },
 );
+
+/**
+ * Lectura directa a la base, sin caché. Sin `productIds` trae todo el catálogo
+ * (lo que cachea `loadCatalog`); con ellos, solo esos productos. Devuelve además
+ * las unidades por variante, que NO cruzan al cliente: las usa el re-chequeo de
+ * disponibilidad del checkout, que necesita datos frescos.
+ */
+async function queryCatalog(productIds?: readonly string[]): Promise<FreshStorefrontCatalog> {
+  if (productIds && productIds.length === 0) {
+    return { products: [], unitsByVariant: new Map() };
+  }
+  const supabase = createAdminClient();
+
+  let query = supabase
+    .from("products")
+    .select(
+      "id, sku, name, brand, description, image_url, base_price, category, simbolismo, short_name, created_at, is_published, " +
+        "product_variants(id, sku, attributes, price_delta, image_url, is_active, short_name), " +
+        "product_options(id, name, price, max_qty, is_active)",
+    )
+    .eq("is_published", true)
+    .in("brand", ["crisalidas", "complementos"]);
+  if (productIds) query = query.in("id", [...productIds]);
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as StorefrontProductRow[];
+  if (rows.length === 0) return { products: [], unitsByVariant: new Map() };
+
+  const { data: avail, error: availError } = await supabase
+    .from("v_variant_availability")
+    .select("variant_id, available_units")
+    .in(
+      "product_id",
+      rows.map((r) => r.id),
+    );
+  if (availError) throw availError;
+
+  const unitsByVariant = new Map<string, number>(
+    (avail ?? []).map((a) => [a.variant_id as string, Number(a.available_units)]),
+  );
+
+  return { products: mapStorefrontProducts(rows, unitsByVariant), unitsByVariant };
+}
+
+/**
+ * Catálogo FRESCO de los productos pedidos, saltándose la caché de 5 minutos.
+ * Solo para el re-chequeo no reservante al entrar a `/checkout`; el resto de la
+ * vitrina sigue leyendo `getStorefrontProducts`.
+ */
+export async function getFreshStorefrontProducts(
+  productIds: readonly string[],
+): Promise<FreshStorefrontCatalog> {
+  return queryCatalog(productIds);
+}
 
 export async function getStorefrontProducts(): Promise<Producto[]> {
   return loadCatalog();
