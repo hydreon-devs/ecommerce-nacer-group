@@ -97,6 +97,52 @@ protected in three layers:
 - **Domain gap**: neither the schema nor `Producto` models `requiere_agenda` or
   preparation time, so there is no agenda path for now.
 
+## Slice 3 detail — "Tus datos" and order creation
+
+The order is created when "Tus datos" is submitted, not at payment, so the
+Summary shows server-computed totals. This merges the order-creation part of
+slice 4 into slice 3.
+
+- **Admin state: "Pendiente de pago".** The order is `abierto`, with
+  `payment_status = 'pendiente'` and `payment_source = 'mercadopago'`.
+  - It is NOT "Pago por aprobar" (`comprobante_recibido`). That state means a
+    transfer proof is awaiting human review, and registering one extends the
+    reservation to 2 business days.
+  - Reservation TTL: **60 minutes**. Unpaid orders expire through
+    `expire_reservations`.
+- **New atomic RPC `create_web_order(p_payload jsonb)`**, modeled on
+  `create_panel_sale`.
+  - Identity: `chat_id = 'web:' || attempt_id`.
+  - Lines: `reserve_variant` per line.
+  - Order fields: occasion and date set on the order, with the date validated
+    by `is_delivery_date`.
+  - Delivery: `set_delivery` with the distance re-computed server-side.
+  - Customer data: a `sale_details` row inserted already submitted, using the
+    same normalization and CHECKs as `submit_sale_details`.
+  - Never calls `confirm_order`.
+  - Idempotent per `attempt_id`. An optional `replaces_attempt_id` cancels the
+    previous open web order in the same transaction, when the customer goes
+    back and changes the cart or delivery.
+  - Why existing RPCs can't be chained:
+    - `create_sale_form_token` rejects unpaid orders.
+    - Chained calls are not atomic.
+    - `set_discovery_context` writes `conversations` rows.
+- **Form**: the 19 post-sale fields (spec 015 RF-14 and §3.6 formats), split
+  into sub-pages with progress ("Paso 2 · 1 de 4"):
+  1. **Tus datos**: buyer name, phone, optional email.
+  2. **Quién recibe** ("Quién recoge" for pickup): name, phone, call permission.
+  3. **La tarjeta**: occasion (web-only: WhatsApp asks it in chat), from, to,
+     message, special notes.
+  4. **Facturación**: invoice yes/no, with the three invoice fields shown only
+     on "sí", then referral source and the Ley 1581 notice.
+
+  Address-related fields are not asked again: neighborhood, apartment/tower,
+  city and building name belong to step 1, Entrega. `building_name` is added
+  to step 1.
+- **Admin panel**: recognise `web:` chats like `panel:`.
+  - Show `buyer_phone` as contact, not "WhatsApp web:…".
+  - Show a "Web" channel marker.
+
 ## Open decisions (`TODO(decisión)`)
 
 - **Invoice and bank accounts**: spec 015 RF-20 says the business uses two bank
