@@ -14,11 +14,15 @@ import { isMunicipality } from "@/lib/domain/checkout/municipalities";
 import { getFreshStorefrontProducts } from "@/lib/data/storefront-products";
 import { fetchDeliveryFee } from "@/lib/data/delivery-fee";
 import { createGoogleDistanceProvider } from "@/lib/data/google-distance-provider";
+import { callCreateWebOrder } from "@/lib/data/web-order";
+import { allowOrderRequest, allowQuoteRequest } from "@/lib/data/checkout-rate-limit";
+import type { CreateOrderResult } from "@/lib/domain/checkout/attempt";
+import { createWebOrder } from "@/lib/domain/checkout/createWebOrder";
 
 /**
- * Server actions of checkout step 1. They are public POST endpoints: inputs are
- * untrusted and validated here, and nothing they return is a source of truth
- * (slice 4 re-reads prices, re-measures and reserves stock).
+ * Server actions of checkout. They are public POST endpoints: inputs are
+ * untrusted and validated here, and each is rate limited per IP. Step 1 answers
+ * are display only; `createWebOrderAction` re-measures, re-prices and reserves.
  */
 
 export type AvailabilityResponse =
@@ -58,6 +62,9 @@ export type QuoteResponse =
  * here. A missing key returns the typed `not_configured` error, never a crash.
  */
 export async function quoteDeliveryAction(input: unknown): Promise<QuoteResponse> {
+  if (!(await allowQuoteRequest())) {
+    return { ok: false, error: "rate_limited", message: quoteErrorMessage("rate_limited") };
+  }
   const body = typeof input === "object" && input !== null ? (input as Record<string, unknown>) : {};
   const address = typeof body.address === "string" ? body.address : "";
   const municipality = typeof body.municipality === "string" ? body.municipality : "";
@@ -71,4 +78,24 @@ export async function quoteDeliveryAction(input: unknown): Promise<QuoteResponse
   );
   if (result.ok) return result;
   return { ok: false, error: result.error, message: quoteErrorMessage(result.error) };
+}
+
+/**
+ * Creates the open web order (reservations, delivery, customer details) from
+ * the cart, the delivery choice and the form. Everything in `input` is
+ * untrusted: the use case validates it with the shared schemas, re-measures
+ * the distance and lets the database price the lines. The answer is typed so
+ * the client knows where to send the customer on a failure.
+ */
+export async function createWebOrderAction(input: unknown): Promise<CreateOrderResult> {
+  if (!(await allowOrderRequest())) {
+    return {
+      ok: false,
+      route: { kind: "retry", message: "Estás intentando muy seguido. Espera un momento y vuelve a intentarlo." },
+    };
+  }
+  return createWebOrder(input, {
+    distance: createGoogleDistanceProvider(),
+    rpc: callCreateWebOrder,
+  });
 }

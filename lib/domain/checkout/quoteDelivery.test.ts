@@ -151,6 +151,7 @@ describe("quoteErrorMessage", () => {
       "provider_error",
       "out_of_coverage",
       "fee_unavailable",
+      "rate_limited",
     ] as const) {
       assert.ok(quoteErrorMessage(kind).length > 10);
     }

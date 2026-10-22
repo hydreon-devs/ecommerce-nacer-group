@@ -14,6 +14,8 @@ import { ADDRESS_MAX_LENGTH, ADDRESS_MIN_LENGTH } from "./quoteDelivery.ts";
  *    offers; `is_delivery_date` stays the authority at order creation.
  */
 
+export const BUILDING_MAX_LENGTH = 120;
+
 // ---- Final, validated step ------------------------------------------------------
 
 const MESSAGES = {
@@ -21,6 +23,7 @@ const MESSAGES = {
   address: `Escribe la dirección completa (mínimo ${ADDRESS_MIN_LENGTH} caracteres).`,
   neighborhood: "Cuéntanos el barrio.",
   municipality: "Elige un municipio del área metropolitana.",
+  building: "Máximo 120 caracteres.",
   quote: "Calcula el domicilio para continuar.",
   confirmed: "Confirma que la dirección es correcta para continuar.",
 };
@@ -46,6 +49,13 @@ export function createDeliveryStepSchema(calendar: readonly string[]) {
       .min(2, { error: MESSAGES.neighborhood })
       .max(100, { error: MESSAGES.neighborhood }),
     unit: z.string().trim().max(100).optional(),
+    /** Urbanización o edificio (`building_name`). Optional, up to 120 like the database. */
+    building: z
+      .string()
+      .trim()
+      .max(BUILDING_MAX_LENGTH, { error: MESSAGES.building })
+      .transform((v) => (v === "" ? undefined : v))
+      .optional(),
     resolvedAddress: z.string().trim().min(1, { error: MESSAGES.quote }),
     meters: z.number({ error: MESSAGES.quote }).int({ error: MESSAGES.quote }).nonnegative({ error: MESSAGES.quote }),
     /** DISPLAY ONLY: slice 4 recomputes the fee server-side. */
@@ -78,13 +88,15 @@ export interface DeliveryDraft {
   municipality: Municipality | "";
   neighborhood: string;
   unit: string;
+  /** Urbanización o edificio; optional. */
+  building: string;
   quote: DraftQuote | null;
   /** `YYYY-MM-DD`, or "" when not chosen. */
   date: string;
 }
 
 export function emptyDraft(): DeliveryDraft {
-  return { method: null, address: "", municipality: "", neighborhood: "", unit: "", quote: null, date: "" };
+  return { method: null, address: "", municipality: "", neighborhood: "", unit: "", building: "", quote: null, date: "" };
 }
 
 export const DRAFT_VERSION = 1;
@@ -107,6 +119,8 @@ const draftSchema = z.object({
   municipality: z.union([municipalityField, z.literal("")]),
   neighborhood: z.string().max(100),
   unit: z.string().max(100),
+  // Drafts stored before this field existed read as empty.
+  building: z.string().max(BUILDING_MAX_LENGTH).default(""),
   quote: quoteSchema.nullable(),
   date: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
 });
@@ -167,6 +181,7 @@ export function toDeliveryStep(
           municipality: draft.municipality,
           neighborhood: draft.neighborhood,
           unit: draft.unit || undefined,
+          building: draft.building || undefined,
           resolvedAddress: q?.resolvedAddress ?? "",
           meters: q?.meters,
           feeCop: q?.feeCop,

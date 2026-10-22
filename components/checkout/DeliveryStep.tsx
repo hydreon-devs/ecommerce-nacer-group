@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { quoteDeliveryAction } from "@/app/(storefront)/checkout/actions";
 import {
+  BUILDING_MAX_LENGTH,
   currentQuote,
   toDeliveryStep,
   type DeliveryDraft,
@@ -33,6 +34,8 @@ interface Props {
   calendar: { today: string; dates: readonly string[]; holidays: readonly string[] };
   mapsBrowserKey: string | null;
   onChange: (patch: Partial<DeliveryDraft>) => void;
+  /** Messages the server routed back to this step, by step-1 field name. */
+  serverErrors?: Record<string, string>;
 }
 
 type QuoteUi = { phase: "idle" } | { phase: "loading" } | { phase: "error"; message: string };
@@ -43,7 +46,7 @@ type QuoteUi = { phase: "idle" } | { phase: "loading" } | { phase: "error"; mess
  * "¿Es aquí donde entregamos?" -> neighborhood, apartment/tower and date.
  * The fee is display only; slice 4 recomputes it server-side.
  */
-export function DeliveryStep({ draft, calendar, mapsBrowserKey, onChange }: Props) {
+export function DeliveryStep({ draft, calendar, mapsBrowserKey, onChange, serverErrors = {} }: Props) {
   const uid = useId();
   const id = (name: string) => `${uid}-${name}`;
   const addressRef = useRef<HTMLInputElement>(null);
@@ -55,7 +58,8 @@ export function DeliveryStep({ draft, calendar, mapsBrowserKey, onChange }: Prop
   const confirmed = quote?.confirmed === true;
   const validation = toDeliveryStep(draft, calendar.dates);
   const errors = validation.ok ? {} : validation.errors;
-  const fieldError = (field: string) => (touched.has(field) ? errors[field] : undefined);
+  const fieldError = (field: string) =>
+    (touched.has(field) ? errors[field] : undefined) ?? serverErrors[field];
 
   async function calculate() {
     const address = draft.address.trim();
@@ -327,6 +331,28 @@ export function DeliveryStep({ draft, calendar, mapsBrowserKey, onChange }: Prop
                         autoComplete="address-line2"
                         className={FIELD}
                       />
+                    </div>
+                    <div>
+                      <label htmlFor={id("building")} className={LABEL}>
+                        Urbanización o edificio <span className="font-normal text-ink-muted">(opcional)</span>
+                      </label>
+                      <input
+                        id={id("building")}
+                        type="text"
+                        maxLength={BUILDING_MAX_LENGTH}
+                        value={draft.building}
+                        onChange={(e) => onChange({ building: e.target.value })}
+                        onBlur={() => touch("building")}
+                        placeholder="Ej. Unidad Los Almendros"
+                        aria-invalid={fieldError("building") ? true : undefined}
+                        aria-describedby={fieldError("building") ? id("building-error") : undefined}
+                        className={FIELD}
+                      />
+                      {fieldError("building") && (
+                        <p id={id("building-error")} className={ERROR}>
+                          {fieldError("building")}
+                        </p>
+                      )}
                     </div>
                   </div>
 

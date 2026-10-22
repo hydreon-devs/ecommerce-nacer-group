@@ -20,6 +20,7 @@ const domicilio = {
   municipality: "Envigado",
   neighborhood: "Zona 4",
   unit: "Torre 2 apto 301",
+  building: "Unidad Los Almendros",
   resolvedAddress: "Cl. 10 #5-20, Envigado, Antioquia, Colombia",
   meters: 5421,
   feeCop: 25_000,
@@ -46,6 +47,14 @@ describe("delivery step schema", () => {
     const rest: Record<string, unknown> = { ...domicilio };
     delete rest.unit;
     assert.equal(schema.safeParse(rest).success, true);
+  });
+
+  it("makes the urbanización / edificio optional and caps it at 120 characters", () => {
+    const rest: Record<string, unknown> = { ...domicilio };
+    delete rest.building;
+    assert.equal(schema.safeParse(rest).success, true);
+    assert.equal(schema.safeParse({ ...domicilio, building: "e".repeat(120) }).success, true);
+    assert.equal(schema.safeParse({ ...domicilio, building: "e".repeat(121) }).success, false);
   });
 
   it("requires the customer's confirmation of the address", () => {
@@ -87,6 +96,7 @@ function fullDraft(overrides: Partial<DeliveryDraft> = {}): DeliveryDraft {
     municipality: "Envigado",
     neighborhood: "Zona 4",
     unit: "",
+    building: "",
     quote: {
       address: "Calle 10 #5-20",
       municipality: "Envigado",
@@ -121,6 +131,39 @@ describe("draft persistence", () => {
       ),
       emptyDraft(),
     );
+  });
+});
+
+describe("building name in the draft", () => {
+  it("starts empty and round-trips", () => {
+    assert.equal(emptyDraft().building, "");
+    const draft = fullDraft({ building: "Edificio Aliadas" });
+    assert.equal(parseStoredDraft(serializeDraft(draft)).building, "Edificio Aliadas");
+  });
+
+  it("reads a draft stored before the field existed, with an empty building", () => {
+    const legacy: Partial<DeliveryDraft> = fullDraft();
+    delete legacy.building;
+    const raw = JSON.stringify({ version: 1, draft: legacy });
+    assert.deepEqual(parseStoredDraft(raw), fullDraft());
+  });
+
+  it("rejects a stored building over 120 characters", () => {
+    const raw = JSON.stringify({ version: 1, draft: { ...fullDraft(), building: "e".repeat(121) } });
+    assert.deepEqual(parseStoredDraft(raw), emptyDraft());
+  });
+
+  it("passes the building to the validated step and drops a blank one", () => {
+    const withBuilding = toDeliveryStep(fullDraft({ building: "  Torres del Parque " }), CALENDAR);
+    assert.equal(withBuilding.ok && withBuilding.step.method === "domicilio" && withBuilding.step.building, "Torres del Parque");
+    const blank = toDeliveryStep(fullDraft({ building: "  " }), CALENDAR);
+    assert.equal(blank.ok && blank.step.method === "domicilio" && blank.step.building, undefined);
+  });
+
+  it("reports an over-long building as a field error", () => {
+    const r = toDeliveryStep(fullDraft({ building: "e".repeat(121) }), CALENDAR);
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.ok(r.errors.building);
   });
 });
 

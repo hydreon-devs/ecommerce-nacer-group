@@ -27,7 +27,9 @@ export type QuoteErrorKind =
   | "address_not_found"
   | "provider_error"
   | "out_of_coverage"
-  | "fee_unavailable";
+  | "fee_unavailable"
+  /** Too many requests from the same address; see `lib/rateLimit.ts`. */
+  | "rate_limited";
 
 export type QuoteDeliveryResult =
   | { ok: true; resolvedAddress: string; meters: number; feeCop: number }
@@ -119,6 +121,7 @@ const MESSAGES: Record<QuoteErrorKind, string> = {
     "Esa dirección queda fuera de nuestra zona de entrega. Escríbenos por WhatsApp y vemos cómo hacerlo posible.",
   fee_unavailable:
     "No pudimos calcular el valor del domicilio en este momento. Inténtalo de nuevo en unos minutos.",
+  rate_limited: "Estás intentando muy seguido. Espera un momento y vuelve a intentarlo.",
 };
 
 /** Customer-facing copy (Spanish) for each failure; never leaks provider details. */
