@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { rpcErrorMessage } from "@/lib/domain/stockRecipe";
 import { clearImage, storeImage } from "@/lib/admin/imageStorage";
+import { optionalImageFile, validateImageFile } from "@/lib/domain/imageUpload";
 import { isProductSkuTaken, isVariantSkuTaken, resolveVariantSku } from "@/lib/domain/sku";
 
 /** Techos de precio de Crisálidas (spec 001 §4.1) — advertencia, no bloqueo
@@ -44,6 +45,13 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
   }
   if (await isVariantSkuTaken(input.variantSku)) {
     return { error: `El SKU de variante "${input.variantSku}" ya existe.` };
+  }
+
+  // La foto es opcional; se valida antes de crear nada para no dejar un producto a medias.
+  const photo = optionalImageFile(formData.get("photo"));
+  if (photo) {
+    const check = validateImageFile(photo);
+    if (!check.ok) return { error: check.error };
   }
 
   let warning: string | null = null;
@@ -92,12 +100,27 @@ export async function createProduct(_prev: FormState, formData: FormData): Promi
     };
   }
 
+  // Si la foto falla, el producto ya existe: no se revierte y la ficha avisa con `?foto=error`.
+  let photoFailed = false;
+  if (photo) {
+    const { data: variant } = await supabase
+      .from("product_variants")
+      .select("id")
+      .eq("sku", input.variantSku)
+      .maybeSingle();
+    const res = variant
+      ? await storeImage({ table: "product_variants", folder: "variants", id: variant.id }, photo)
+      : null;
+    photoFailed = !res?.ok;
+  }
+
   revalidatePath("/admin/productos");
 
-  if (warning) {
-    redirect(`/admin/productos/${product.sku}?warning=${encodeURIComponent(warning)}`);
-  }
-  redirect(`/admin/productos/${product.sku}`);
+  const query = new URLSearchParams();
+  if (warning) query.set("warning", warning);
+  if (photoFailed) query.set("foto", "error");
+  const qs = query.toString();
+  redirect(`/admin/productos/${product.sku}${qs ? `?${qs}` : ""}`);
 }
 
 export async function setProductPublished(productId: string, published: boolean) {

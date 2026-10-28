@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { ActionStatus } from "../../ui/ActionStatus";
 import { fieldsetClass, helpTextClass, inputClass, labelClass, primaryButtonClass, selectClass } from "../../ui/formClasses";
+import { PhotoPicker } from "../../ui/PhotoPicker";
 import { createProduct, type FormState } from "../actions";
 import { CRISALIDAS_COLLECTIONS, PRODUCT_TYPES } from "../productTypes";
 
@@ -259,6 +260,8 @@ export function NewProductForm() {
               className={`${inputClass} font-admin-mono`}
             />
           </div>
+
+          <PhotoPicker className="sm:col-span-2" />
         </div>
       </fieldset>
 
