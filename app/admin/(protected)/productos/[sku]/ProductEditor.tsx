@@ -12,6 +12,7 @@ import {
 } from "@/lib/domain/stockRecipe";
 import {
   createVariant,
+  removeVariantImage,
   setProductPublished,
   setVariantActive,
   uploadVariantImage,
@@ -133,6 +134,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [confirmingRemoveImage, setConfirmingRemoveImage] = useState(false);
   const stockId = useId();
   const imageId = useId();
   const [pending, startTransition] = useTransition();
@@ -227,7 +229,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
             setNotice(null);
             setUploading(true);
             startTransition(async () => {
-              const res = await uploadVariantImage(variant.id, variant.sku, fd);
+              const res = await uploadVariantImage(variant.id, fd);
               setUploading(false);
               if (res.ok) {
                 setImageUrl(res.url);
@@ -240,7 +242,44 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
           }}
           className="min-h-11 text-sm text-admin-ink-secondary file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-lg file:border file:border-admin-border file:bg-admin-surface-raised file:px-3 file:text-sm file:font-medium file:text-admin-ink-secondary"
         />
+        {imageUrl ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setConfirmingRemoveImage(true)}
+            className={`${secondaryButtonClass} self-start`}
+          >
+            Eliminar foto
+          </button>
+        ) : null}
       </div>
+      <ConfirmDialog
+        open={confirmingRemoveImage}
+        title="¿Eliminar la foto?"
+        description={`Se borrará la imagen de ${variantLabel}. Podrás subir otra cuando quieras.`}
+        confirmLabel="Eliminar"
+        tone="danger"
+        onCancel={() => setConfirmingRemoveImage(false)}
+        onConfirm={() => {
+          setConfirmingRemoveImage(false);
+          setError(null);
+          setNotice(null);
+          startTransition(async () => {
+            try {
+              const res = await removeVariantImage(variant.id);
+              if (res.ok) {
+                setImageUrl(null);
+                setImageBroken(false);
+                setNotice("Imagen eliminada");
+              } else {
+                setError(res.error);
+              }
+            } catch {
+              setError("No se pudo eliminar la imagen. Inténtalo de nuevo.");
+            }
+          });
+        }}
+      />
 
       <button
         type="button"

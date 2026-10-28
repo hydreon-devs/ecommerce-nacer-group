@@ -4,6 +4,7 @@ import { getStockItemBySku } from "@/lib/data/stock-items";
 import { BackLink } from "../../../ui/BackLink";
 import { InventoryTabs } from "../../InventoryTabs";
 import { StockItemForm } from "../StockItemForm";
+import { StockItemPhoto } from "./StockItemPhoto";
 import { StockItemControls } from "./StockItemControls";
 
 export const metadata: Metadata = { title: "Insumo — Panel Nacer Group" };
@@ -46,6 +47,8 @@ export default async function InsumoDetailPage({ params }: { params: Promise<{ s
           unit: item.unit,
         }}
       />
+
+      <StockItemPhoto itemId={item.id} name={item.name} imageUrl={item.imageUrl} />
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-admin-ink">Datos</h2>

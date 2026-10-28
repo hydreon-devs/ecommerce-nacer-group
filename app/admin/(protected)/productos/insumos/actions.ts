@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { clearImage, storeImage } from "@/lib/admin/imageStorage";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
 import {
@@ -207,4 +208,25 @@ export async function saveVariantRecipe(variantId: string, rows: RecipeRow[]) {
 
 export async function saveOptionRecipe(optionId: string, rows: RecipeRow[]) {
   return saveRecipe("option", optionId, rows);
+}
+
+export async function uploadStockItemImage(
+  itemId: string,
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const res = await storeImage({ table: "stock_items", folder: "stock-items", id: itemId }, formData.get("file"));
+  if (!res.ok) return res;
+  revalidatePath("/admin/productos/insumos");
+  revalidatePath(`/admin/productos/insumos/${res.sku}`);
+  return { ok: true, url: res.url };
+}
+
+export async function removeStockItemImage(
+  itemId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await clearImage({ table: "stock_items", folder: "stock-items", id: itemId });
+  if (!res.ok) return res;
+  revalidatePath("/admin/productos/insumos");
+  revalidatePath(`/admin/productos/insumos/${res.sku}`);
+  return { ok: true };
 }

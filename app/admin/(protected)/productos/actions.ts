@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { rpcErrorMessage } from "@/lib/domain/stockRecipe";
+import { clearImage, storeImage } from "@/lib/admin/imageStorage";
 import { isProductSkuTaken, isVariantSkuTaken, resolveVariantSku } from "@/lib/domain/sku";
 
 /** Techos de precio de Crisálidas (spec 001 §4.1) — advertencia, no bloqueo
@@ -163,74 +164,21 @@ export async function createVariant(
   return { ok: true, sku };
 }
 
-const ALLOWED_IMAGE_TYPES: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/webp": "webp",
-};
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
 export async function uploadVariantImage(
   variantId: string,
-  variantSku: string,
   formData: FormData,
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "Selecciona una imagen." };
-  }
-
-  const ext = ALLOWED_IMAGE_TYPES[file.type];
-  if (!ext) {
-    return { ok: false, error: "Formato no soportado — usa PNG, JPG o WEBP." };
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    return { ok: false, error: "La imagen supera 5 MB." };
-  }
-
-  const supabase = createAdminClient();
-
-  const { data: variant, error: variantError } = await supabase
-    .from("product_variants")
-    .select("image_url")
-    .eq("id", variantId)
-    .maybeSingle();
-  if (variantError) throw variantError;
-
-  const path = `variants/${variantSku}.${ext}`;
-
-  // Si la extensión anterior era distinta, borra el objeto viejo (plan §5):
-  // si no, queda un archivo huérfano sirviendo una URL que nadie referencia.
-  const previousMatch = variant?.image_url?.match(/variants\/[^/]+\.(\w+)$/);
-  const previousExt = previousMatch?.[1];
-  if (previousExt && previousExt !== ext) {
-    await supabase.storage
-      .from("catalogo_nacergroup")
-      .remove([`variants/${variantSku}.${previousExt}`]);
-  }
-
-  const arrayBuffer = await file.arrayBuffer();
-  const { error: uploadError } = await supabase.storage
-    .from("catalogo_nacergroup")
-    .upload(path, arrayBuffer, { upsert: true, contentType: file.type });
-
-  if (uploadError) {
-    return { ok: false, error: `No se pudo subir la imagen: ${uploadError.message}` };
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("catalogo_nacergroup").getPublicUrl(path);
-
-  const { error: updateError } = await supabase
-    .from("product_variants")
-    .update({ image_url: publicUrl })
-    .eq("id", variantId);
-
-  if (updateError) {
-    return { ok: false, error: `No se pudo actualizar la variante: ${updateError.message}` };
-  }
-
+  const res = await storeImage({ table: "product_variants", folder: "variants", id: variantId }, formData.get("file"));
+  if (!res.ok) return res;
   revalidatePath("/admin/productos");
-  return { ok: true, url: publicUrl };
+  return { ok: true, url: res.url };
+}
+
+export async function removeVariantImage(
+  variantId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await clearImage({ table: "product_variants", folder: "variants", id: variantId });
+  if (!res.ok) return res;
+  revalidatePath("/admin/productos");
+  return { ok: true };
 }
