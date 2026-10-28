@@ -24,39 +24,41 @@ export function StockItemForm({
       action={formAction}
       className="flex flex-col gap-4 rounded-xl border border-transparent bg-admin-surface-raised p-4 shadow-admin-card"
     >
-      {/* El SKU solo se pide al crear; al editar viaja oculto sin cambios. */}
-      {item ? (
-        <input type="hidden" name="sku" value={item.sku} />
-      ) : (
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>SKU</span>
-          <input
-            name="sku"
-            required
-            value={sku}
-            onChange={(e) => setSku(e.target.value)}
-            className={`${inputClass} font-admin-mono`}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        {/* El SKU solo se pide al crear; al editar viaja oculto sin cambios. */}
+        {item ? (
+          <input type="hidden" name="sku" value={item.sku} />
+        ) : (
+          <label className="flex flex-col gap-1 md:col-span-4">
+            <span className={labelClass}>SKU</span>
+            <input
+              name="sku"
+              required
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              className={`${inputClass} font-admin-mono`}
+            />
+          </label>
+        )}
+        <label className={`flex flex-col gap-1 ${item ? "md:col-span-12" : "md:col-span-8"}`}>
+          <span className={labelClass}>Nombre</span>
+          <input name="name" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+        </label>
+        <label className="flex flex-col gap-1 md:col-span-4">
+          <span className={labelClass}>Unidad</span>
+          <input name="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} className={inputClass} />
+        </label>
+        <label className="flex flex-col gap-1 md:col-span-8">
+          <span className={labelClass}>Descripción</span>
+          <textarea
+            name="description"
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={inputClass}
           />
         </label>
-      )}
-      <label className="flex flex-col gap-1">
-        <span className={labelClass}>Nombre</span>
-        <input name="name" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className={labelClass}>Descripción</span>
-        <textarea
-          name="description"
-          rows={2}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className={inputClass}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className={labelClass}>Unidad</span>
-        <input name="unit" required value={unit} onChange={(e) => setUnit(e.target.value)} className={inputClass} />
-      </label>
+      </div>
       {item ? <input type="hidden" name="previousSku" value={item.sku} /> : null}
       {!item ? (
         <p className={helpTextClass}>

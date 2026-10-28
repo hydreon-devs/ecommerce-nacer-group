@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Nuevo insumo — Panel Nacer Group" 
 
 export default function NuevoInsumoPage() {
   return (
-    <div className="animate-view-in flex max-w-xl flex-col gap-6">
+    <div className="animate-view-in flex max-w-3xl flex-col gap-6">
       <InventoryTabs active="insumos" />
       <div className="flex flex-col gap-3">
         <BackLink href="/admin/productos/insumos">Insumos</BackLink>
