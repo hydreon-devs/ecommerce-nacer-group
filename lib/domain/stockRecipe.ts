@@ -79,6 +79,12 @@ const RPC_MESSAGES: Record<string, string> = {
   STOCK_INVALIDO: "El stock inicial debe ser un entero mayor o igual a cero.",
   PRODUCTO_NO_EXISTE: "El producto ya no existe.",
   SKU_EN_USO: "Ese SKU ya está en uso.",
+  NOMBRE_REQUERIDO: "El nombre es obligatorio.",
+  ORIGEN_INVALIDO: "Elige el origen del insumo.",
+  VARIANTE_SOLO_TALLER: "Solo los insumos hechos en taller pueden tener variantes.",
+  SKU_BASE_INVALIDO: "El insumo base no tiene una referencia válida para derivar variantes.",
+  SUFIJOS_AGOTADOS: "Ese insumo ya no admite más variantes.",
+  SECUENCIA_AGOTADA: "Se agotó la secuencia de referencias para este origen.",
 };
 
 export function rpcErrorMessage(code: string | undefined | null, fallback?: string): string {

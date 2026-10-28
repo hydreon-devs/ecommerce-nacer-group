@@ -14,6 +14,8 @@ export interface StockItemRow {
   name: string;
   description: string | null;
   kind: "self" | "component";
+  /** Null only for `self` mirrors; every component has an origin. */
+  origin: "workshop" | "purchased" | null;
   unit: string;
   stockQty: number;
   reserved: number;
@@ -46,6 +48,7 @@ interface RawItem {
   name: string;
   description: string | null;
   kind: "self" | "component";
+  origin: "workshop" | "purchased" | null;
   unit: string;
   stock_qty: number;
   is_active: boolean;
@@ -66,6 +69,7 @@ function toRow(item: RawItem, av: RawAvailability | undefined): StockItemRow {
     name: item.name,
     description: item.description,
     kind: item.kind,
+    origin: item.origin,
     unit: item.unit,
     stockQty: item.stock_qty,
     reserved: av?.reserved ?? 0,
@@ -77,7 +81,7 @@ function toRow(item: RawItem, av: RawAvailability | undefined): StockItemRow {
   };
 }
 
-const ITEM_COLUMNS = "id, sku, name, description, kind, unit, stock_qty, is_active, variant_id, image_url";
+const ITEM_COLUMNS = "id, sku, name, description, kind, origin, unit, stock_qty, is_active, variant_id, image_url";
 
 /** Todos los insumos con su disponibilidad. Los `self` (espejo de variante) se excluyen salvo que se pida. */
 export async function getStockItems(opts: { includeSelf?: boolean } = {}): Promise<StockItemRow[]> {

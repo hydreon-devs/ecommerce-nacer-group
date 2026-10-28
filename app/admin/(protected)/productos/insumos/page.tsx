@@ -134,6 +134,11 @@ export default async function InsumosPage({
                     <span className="text-sm font-medium text-admin-ink">
                       {item.available} disponibles
                     </span>
+                    {item.origin ? (
+                      <span className="rounded-full bg-admin-surface-sunken px-2 py-0.5 text-admin-ink-secondary">
+                        {item.origin === "workshop" ? "Taller" : "Comprado"}
+                      </span>
+                    ) : null}
                     {level !== "ok" ? (
                       <span
                         className={`rounded-full px-2 py-0.5 font-semibold ${

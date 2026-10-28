@@ -7,6 +7,7 @@ import { clearImage, storeImage } from "@/lib/admin/imageStorage";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
 import { optionalImageFile, validateImageFile } from "@/lib/domain/imageUpload";
+import { mapCreateStockItemResult, parseCreateStockItemInput } from "@/lib/domain/stockItemCreate";
 import {
   rpcErrorMessage,
   validateRecipeRows,
@@ -36,50 +37,44 @@ async function currentActor(): Promise<string> {
   return user?.email ?? "panel";
 }
 
-const itemFieldsSchema = z.object({
-  sku: z.string().trim().min(2, "El SKU es obligatorio.").max(60),
+const updateFieldsSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio."),
   description: z.string().trim().optional(),
   unit: z.string().trim().min(1, "La unidad es obligatoria.").max(20),
 });
 
 export async function createStockItem(_prev: FormState, formData: FormData): Promise<FormState> {
-  const parsed = itemFieldsSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  const parsed = parseCreateStockItemInput(Object.fromEntries(formData));
+  if (!parsed.ok) return { error: parsed.error };
   const input = parsed.data;
 
-  // La foto es opcional; se valida antes de insertar para no dejar un insumo a medias.
+  // La foto es opcional; se valida antes de crear para no dejar un insumo a medias.
   const photo = optionalImageFile(formData.get("photo"));
   if (photo) {
     const check = validateImageFile(photo);
     if (!check.ok) return { error: check.error };
   }
 
-  const supabase = createAdminClient();
-  const { data: created, error } = await supabase
-    .from("stock_items")
-    .insert({
-      sku: input.sku,
-      name: input.name,
-      description: input.description || null,
-      unit: input.unit,
-      kind: "component",
-    })
-    .select("id")
-    .single();
-  if (error) {
-    return {
-      error: error.code === "23505" ? `El SKU "${input.sku}" ya existe.` : `No se pudo crear el insumo: ${error.message}`,
-    };
-  }
+  // El SKU lo asigna la base de datos (secuencia por origen / sufijo de variante).
+  const res = mapCreateStockItemResult(
+    await callRpc("create_stock_item", {
+      p_origin: input.origin,
+      p_name: input.name,
+      p_description: input.description,
+      p_unit: input.unit,
+      p_variant_of: input.variantOf,
+    }),
+  );
+  if (!res.ok) return { error: res.error };
+
   // Si la foto falla, el insumo ya existe: no se revierte y la ficha avisa con `?foto=error`.
   let photoFailed = false;
   if (photo) {
-    const res = await storeImage({ table: "stock_items", folder: "stock-items", id: created.id }, photo);
-    photoFailed = !res.ok;
+    const stored = await storeImage({ table: "stock_items", folder: "stock-items", id: res.stockItemId }, photo);
+    photoFailed = !stored.ok;
   }
   revalidatePath("/admin/productos/insumos");
-  redirect(`/admin/productos/insumos/${encodeURIComponent(input.sku)}${photoFailed ? "?foto=error" : ""}`);
+  redirect(`/admin/productos/insumos/${encodeURIComponent(res.sku)}${photoFailed ? "?foto=error" : ""}`);
 }
 
 export async function updateStockItem(
@@ -87,31 +82,24 @@ export async function updateStockItem(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = itemFieldsSchema.safeParse(Object.fromEntries(formData));
+  const parsed = updateFieldsSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   const input = parsed.data;
 
+  // El SKU y el origen son inmutables: nunca van en el payload de actualización.
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("stock_items")
     .update({
-      sku: input.sku,
       name: input.name,
       description: input.description || null,
       unit: input.unit,
       updated_at: new Date().toISOString(),
     })
     .eq("id", itemId);
-  if (error) {
-    return {
-      error: error.code === "23505" ? `El SKU "${input.sku}" ya existe.` : `No se pudo guardar: ${error.message}`,
-    };
-  }
+  if (error) return { error: `No se pudo guardar: ${error.message}` };
   revalidatePath("/admin/productos/insumos");
-  // Si el SKU cambió, la URL de la ficha cambia: hay que redirigir. Si no, se
-  // queda en la página y se confirma el guardado en el formulario.
-  if (formData.get("previousSku") === input.sku) return { error: null, saved: true };
-  redirect(`/admin/productos/insumos/${encodeURIComponent(input.sku)}`);
+  return { error: null, saved: true };
 }
 
 export async function setStockItemActive(itemId: string, sku: string, active: boolean) {

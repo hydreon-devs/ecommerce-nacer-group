@@ -11,6 +11,8 @@ import { StockItemControls } from "./StockItemControls";
 export const metadata: Metadata = { title: "Insumo — Panel Nacer Group" };
 export const dynamic = "force-dynamic";
 
+const ORIGIN_LABEL = { workshop: "Hecho en taller", purchased: "Comprado" } as const;
+
 const dateFmt = new Intl.DateTimeFormat("es-CO", {
   dateStyle: "short",
   timeStyle: "short",
@@ -41,6 +43,12 @@ export default async function InsumoDetailPage({
             <span className="font-admin-mono">{item.sku}</span>
             <span aria-hidden="true">·</span>
             <span>{item.kind === "self" ? "Espejo de variante" : "Insumo"}</span>
+            {item.origin ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{ORIGIN_LABEL[item.origin]}</span>
+              </>
+            ) : null}
             {item.isActive ? null : (
               <span className="rounded-full bg-admin-warning-bg px-2 py-0.5 text-admin-warning-fg">
                 Inactivo

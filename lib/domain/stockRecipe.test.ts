@@ -82,6 +82,18 @@ describe("rpcErrorMessage", () => {
     assert.match(rpcErrorMessage("STOCK_NEGATIVO"), /negativ/i);
     assert.match(rpcErrorMessage("SKU_EN_USO"), /SKU/);
   });
+  it("traduce los códigos de create_stock_item", () => {
+    for (const code of [
+      "NOMBRE_REQUERIDO",
+      "ORIGEN_INVALIDO",
+      "VARIANTE_SOLO_TALLER",
+      "SKU_BASE_INVALIDO",
+      "SUFIJOS_AGOTADOS",
+      "SECUENCIA_AGOTADA",
+    ]) {
+      assert.doesNotMatch(rpcErrorMessage(code), /No se pudo completar/, code);
+    }
+  });
   it("usa el mensaje de respaldo o uno genérico para códigos desconocidos", () => {
     assert.equal(rpcErrorMessage("RARO", "del servidor"), "del servidor");
     assert.match(rpcErrorMessage("RARO"), /No se pudo/);
