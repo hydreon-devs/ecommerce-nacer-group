@@ -4,6 +4,7 @@ import {
   IMAGE_BUCKET,
   MAX_IMAGE_BYTES,
   imageObjectPath,
+  optionalImageFile,
   storagePathFromPublicUrl,
   validateImageFile,
 } from "./imageUpload.ts";
@@ -68,5 +69,18 @@ describe("storagePathFromPublicUrl", () => {
     assert.equal(storagePathFromPublicUrl(`${BASE}/${IMAGE_BUCKET}/variants/a/b.jpg`, "variants"), null);
     assert.equal(storagePathFromPublicUrl("https://example.com/foto.jpg", "variants"), null);
     assert.equal(storagePathFromPublicUrl(null, "variants"), null);
+  });
+});
+
+describe("optionalImageFile", () => {
+  it("treats missing entries and empty file inputs as no photo", () => {
+    assert.equal(optionalImageFile(null), null);
+    assert.equal(optionalImageFile("texto"), null);
+    assert.equal(optionalImageFile(new File([], "")), null);
+    assert.equal(optionalImageFile(new File([], "a.png", { type: "image/png" })), null);
+  });
+  it("returns the file when one was picked", () => {
+    const file = new File(["x"], "a.png", { type: "image/png" });
+    assert.equal(optionalImageFile(file), file);
   });
 });

@@ -19,6 +19,11 @@ export function validateImageFile(file: { type: string; size: number }): ImageVa
   return { ok: true, ext };
 }
 
+/** Entrada opcional de un `FormData`: un input de archivo vacío llega como `File` de 0 bytes. */
+export function optionalImageFile(entry: unknown): File | null {
+  return entry instanceof File && entry.size > 0 ? entry : null;
+}
+
 /** Ruta del objeto a partir del SKU de la base. `null` si el SKU podría salirse de la carpeta. */
 export function imageObjectPath(folder: ImageFolder, sku: string, ext: string): string | null {
   if (!sku || sku.includes("/") || sku.includes("..")) return null;

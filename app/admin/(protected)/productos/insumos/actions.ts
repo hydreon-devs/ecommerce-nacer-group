@@ -6,6 +6,7 @@ import { z } from "zod";
 import { clearImage, storeImage } from "@/lib/admin/imageStorage";
 import { createAdminClient } from "@/lib/supabase/admin-client";
 import { createAuthServerClient } from "@/lib/supabase/auth-server";
+import { optionalImageFile, validateImageFile } from "@/lib/domain/imageUpload";
 import {
   rpcErrorMessage,
   validateRecipeRows,
@@ -47,21 +48,38 @@ export async function createStockItem(_prev: FormState, formData: FormData): Pro
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   const input = parsed.data;
 
+  // La foto es opcional; se valida antes de insertar para no dejar un insumo a medias.
+  const photo = optionalImageFile(formData.get("photo"));
+  if (photo) {
+    const check = validateImageFile(photo);
+    if (!check.ok) return { error: check.error };
+  }
+
   const supabase = createAdminClient();
-  const { error } = await supabase.from("stock_items").insert({
-    sku: input.sku,
-    name: input.name,
-    description: input.description || null,
-    unit: input.unit,
-    kind: "component",
-  });
+  const { data: created, error } = await supabase
+    .from("stock_items")
+    .insert({
+      sku: input.sku,
+      name: input.name,
+      description: input.description || null,
+      unit: input.unit,
+      kind: "component",
+    })
+    .select("id")
+    .single();
   if (error) {
     return {
       error: error.code === "23505" ? `El SKU "${input.sku}" ya existe.` : `No se pudo crear el insumo: ${error.message}`,
     };
   }
+  // Si la foto falla, el insumo ya existe: no se revierte y la ficha avisa con `?foto=error`.
+  let photoFailed = false;
+  if (photo) {
+    const res = await storeImage({ table: "stock_items", folder: "stock-items", id: created.id }, photo);
+    photoFailed = !res.ok;
+  }
   revalidatePath("/admin/productos/insumos");
-  redirect(`/admin/productos/insumos/${encodeURIComponent(input.sku)}`);
+  redirect(`/admin/productos/insumos/${encodeURIComponent(input.sku)}${photoFailed ? "?foto=error" : ""}`);
 }
 
 export async function updateStockItem(

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getStockItemBySku, type StockItemUsage } from "@/lib/data/stock-items";
+import { ActionStatus } from "../../../ui/ActionStatus";
 import { BackLink } from "../../../ui/BackLink";
 import { InventoryTabs } from "../../InventoryTabs";
 import { StockItemForm } from "../StockItemForm";
@@ -16,8 +17,15 @@ const dateFmt = new Intl.DateTimeFormat("es-CO", {
   timeZone: "America/Bogota",
 });
 
-export default async function InsumoDetailPage({ params }: { params: Promise<{ sku: string }> }) {
+export default async function InsumoDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ sku: string }>;
+  searchParams: Promise<{ foto?: string }>;
+}) {
   const { sku } = await params;
+  const { foto } = await searchParams;
   const detail = await getStockItemBySku(decodeURIComponent(sku));
   if (!detail) notFound();
   const { item, usage, movements } = detail;
@@ -41,6 +49,15 @@ export default async function InsumoDetailPage({ params }: { params: Promise<{ s
           </p>
         </div>
       </div>
+
+      {foto === "error" ? (
+        <ActionStatus
+          message={{
+            tone: "warn",
+            text: "El insumo se creó, pero no se pudo subir la foto. Puedes agregarla aquí abajo.",
+          }}
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
         <div className="flex min-w-0 flex-col gap-6 md:col-span-3">
