@@ -21,6 +21,7 @@ export interface StockItemRow {
   isActive: boolean;
   variantId: string | null;
   isDemo: boolean;
+  imageUrl: string | null;
 }
 
 export interface StockItemUsage {
@@ -49,6 +50,7 @@ interface RawItem {
   stock_qty: number;
   is_active: boolean;
   variant_id: string | null;
+  image_url: string | null;
 }
 
 interface RawAvailability {
@@ -71,10 +73,11 @@ function toRow(item: RawItem, av: RawAvailability | undefined): StockItemRow {
     isActive: item.is_active,
     variantId: item.variant_id,
     isDemo: item.sku.startsWith("DEMO-"),
+    imageUrl: item.image_url,
   };
 }
 
-const ITEM_COLUMNS = "id, sku, name, description, kind, unit, stock_qty, is_active, variant_id";
+const ITEM_COLUMNS = "id, sku, name, description, kind, unit, stock_qty, is_active, variant_id, image_url";
 
 /** Todos los insumos con su disponibilidad. Los `self` (espejo de variante) se excluyen salvo que se pida. */
 export async function getStockItems(opts: { includeSelf?: boolean } = {}): Promise<StockItemRow[]> {

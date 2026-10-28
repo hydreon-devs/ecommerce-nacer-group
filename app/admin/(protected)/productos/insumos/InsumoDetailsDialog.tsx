@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { ProductUsage } from "@/lib/domain/stockUsage";
 import { Dialog } from "../../ui/Dialog";
-import { secondaryButtonClass } from "../../ui/formClasses";
+import { focusRingClass, secondaryButtonClass } from "../../ui/formClasses";
 import { ProductThumbnail } from "../ProductThumbnail";
 
 export interface InsumoDialogData {
@@ -32,15 +32,34 @@ const dateFmt = new Intl.DateTimeFormat("es-CO", {
 
 /**
  * "Ver más detalles" de un insumo, sobre `Dialog` (igual que el de Producción).
+ * Con `children`, la tarjeta completa (renderizada en el servidor) es el
+ * disparador: un único `<button>`, así que el contenido debe ser inline.
  */
-export function InsumoDetailsDialog({ data }: { data: InsumoDialogData }) {
+export function InsumoDetailsDialog({
+  data,
+  children,
+}: {
+  data: InsumoDialogData;
+  children?: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={secondaryButtonClass}>
-        Ver más detalles
-      </button>
+      {children ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          className={`flex w-full gap-3 rounded-xl border border-transparent bg-admin-surface-raised p-3 text-left shadow-admin-card transition-colors duration-200 hover:border-admin-border-strong ${focusRingClass}`}
+        >
+          {children}
+        </button>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className={secondaryButtonClass}>
+          Ver más detalles
+        </button>
+      )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
