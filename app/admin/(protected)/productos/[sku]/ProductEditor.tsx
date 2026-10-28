@@ -163,7 +163,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
         <p className="text-sm font-medium text-admin-ink-secondary">{variantLabel}</p>
         <p className="text-xs text-admin-ink-muted">
           Disponible: {variant.availableUnits}
-          {variant.availableUnits === 0 && variant.components.length === 0 ? " · sin receta" : ""}
+          {variant.availableUnits === 0 && variant.components.length === 0 ? " · sin componentes" : ""}
           {!selfOnly && bottleneck ? ` · limita: ${bottleneck.name}` : ""}
         </p>
       </div>
@@ -209,7 +209,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
           </div>
         </div>
       ) : (
-        <p className="text-xs text-admin-ink-muted">Stock calculado por receta</p>
+        <p className="text-xs text-admin-ink-muted">Stock calculado por componentes</p>
       )}
 
       <div className="flex flex-col gap-1">
@@ -319,7 +319,7 @@ function VariantCard({ variant, stockItems }: { variant: VariantRow; stockItems:
       {!selfOnly ? (
         <details className="w-full" open={variant.components.length === 0}>
           <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-admin-ink-secondary">
-            Receta de insumos
+            Componentes
           </summary>
           <RecipeEditor
             initialRows={variant.components}
@@ -452,7 +452,7 @@ function RecipeEditor({
               if (res.ok) {
                 setMessage({
                   error: false,
-                  text: res.availableUnits === null ? "Receta guardada." : `Receta guardada: ${res.availableUnits} unidades.`,
+                  text: res.availableUnits === null ? "Componentes guardados." : `Componentes guardados: ${res.availableUnits} unidades.`,
                 });
                 router.refresh();
               } else {
@@ -462,7 +462,7 @@ function RecipeEditor({
           }
           className={`${primaryButtonClass} ml-auto`}
         >
-          Guardar receta
+          Guardar componentes
         </button>
       </div>
 

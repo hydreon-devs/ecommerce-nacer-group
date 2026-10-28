@@ -145,7 +145,7 @@ function UsageSection({ usage }: { usage: StockItemUsage }) {
       <h2 className="text-sm font-semibold text-admin-ink">Usado en</h2>
       {usage.products.length + usage.options.length === 0 ? (
         <p className="rounded-xl bg-admin-surface-raised p-4 text-sm text-admin-ink-muted shadow-admin-card">
-          Ninguna receta lo usa todavía.
+          Ningún producto lo usa como componente todavía.
         </p>
       ) : (
         <ul className="flex flex-col gap-1 rounded-xl bg-admin-surface-raised p-4 text-sm text-admin-ink-secondary shadow-admin-card">

@@ -38,7 +38,7 @@ export default async function InsumosPage({
         <div>
           <h1 className="text-xl font-bold tracking-tight text-admin-ink">Insumos</h1>
           <p className="text-sm text-admin-ink-muted">
-            Existencias físicas compartidas por las recetas de productos y adicionales
+            Existencias físicas que productos y adicionales usan como componentes
           </p>
         </div>
         <Link

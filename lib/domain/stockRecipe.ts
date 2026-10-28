@@ -73,8 +73,8 @@ const RPC_MESSAGES: Record<string, string> = {
   VARIANTE_NO_EXISTE: "La variante ya no existe.",
   OPCION_NO_EXISTE: "El adicional ya no existe.",
   COMPONENTES_INVALIDOS:
-    "La receta tiene filas inválidas: cada insumo debe aparecer una vez con una cantidad entera mayor que cero.",
-  RECETA_VACIA: "La receta de una variante necesita al menos un insumo.",
+    "Hay componentes inválidos: cada insumo debe aparecer una vez con una cantidad entera mayor que cero.",
+  RECETA_VACIA: "Una variante necesita al menos un componente.",
   SKU_INVALIDO: "El SKU no es válido.",
   STOCK_INVALIDO: "El stock inicial debe ser un entero mayor o igual a cero.",
   PRODUCTO_NO_EXISTE: "El producto ya no existe.",

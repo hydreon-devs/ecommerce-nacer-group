@@ -97,7 +97,7 @@ export function StockItemControls({ item }: Props) {
     },
     deactivate: {
       title: "¿Desactivar este insumo?",
-      description: "Dejará de poder usarse en recetas nuevas. Puedes activarlo de nuevo cuando quieras.",
+      description: "Dejará de poder agregarse como componente. Puedes activarlo de nuevo cuando quieras.",
       confirmLabel: "Desactivar",
       tone: "default" as const,
       run: () => applyActive(false),

@@ -171,7 +171,9 @@ export async function deleteStockItem(itemId: string): Promise<DeleteResult> {
     archived: true,
     usedIn: (res.usado_en as string[] | undefined) ?? [],
     options: (res.opciones as string[] | undefined) ?? [],
-    message: (res.mensaje as string | undefined) ?? "El insumo está en uso y se archivó.",
+    // Texto propio del panel: el `mensaje` de la RPC usa otro vocabulario ("recetas").
+    message:
+      "El insumo es componente de algún producto o tiene historial: se archivó en vez de borrarse. Las variantes que lo usan quedan en 0.",
   };
 }
 

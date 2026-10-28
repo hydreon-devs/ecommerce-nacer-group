@@ -97,7 +97,7 @@ export function InsumoDetailsDialog({
         <section className="flex flex-col gap-2" aria-label="Usado en">
           <h3 className={SECTION_TITLE}>Usado en</h3>
           {data.products.length + data.options.length === 0 ? (
-            <p className="text-sm text-admin-ink-muted">Ninguna receta lo usa todavía.</p>
+            <p className="text-sm text-admin-ink-muted">Ningún producto lo usa como componente todavía.</p>
           ) : (
             <ul className="flex flex-col divide-y divide-admin-border border-y border-admin-border text-sm">
               {data.products.map((p) => (
